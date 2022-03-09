@@ -56,7 +56,7 @@ $PATH = "C:\Temp\"
 
 
 #Connect to the SecurityInterface WMI class
-$SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity 
+$SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface 
 
 #check if c:\temp exist
 if (!(Test-Path $PATH)) {New-Item -Path $PATH -ItemType Directory}
