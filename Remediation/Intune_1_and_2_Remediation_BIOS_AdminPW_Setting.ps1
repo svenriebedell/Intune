@@ -1,7 +1,7 @@
 ﻿<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.2.3
+_version_ = 1.0.2
 _Dev_Status_ = Test
 Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
@@ -20,9 +20,8 @@ limitations under the License.
 
 <#Version Changes
 
-1.2.2   add check folder c:\temp if not there new-item for $Path
-        log path is now a variable $Path
-1.2.3   Switch of BIOS Setting by Dell Command | Monitor to WMI agentless
+1.0.1   Switch of BIOS Setting by Dell Command | Monitor to WMI agentless
+1.0.2   Add new RegKey for date of update will be written to registry
 
 #>
 
@@ -38,34 +37,36 @@ limitations under the License.
 
 
 #Variable for change
-$PWKey = "Dell2022"
+$PWKey = "Dell2022" #Sure-Key of AdminPW
+$PWTime = "180" # Days a password need exist before it will be change
+
+
 
 #Variable not for change
 $PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
+$DateTransfer = (Get-Date).AddDays($PWTime)
 $PWstatus = ""
 $DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
 $serviceTag = Get-CimInstance -ClassName win32_bios | select -ExpandProperty SerialNumber
 $AdminPw = "$serviceTag$PWKey"
 $Date = Get-Date
-$RegKeyexist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
 $PWKeyOld = ""
 $serviceTagOld = ""
 $AdminPwOld = ""
 $PATH = "C:\Temp\"
 
 
-
-#Connect to the SecurityInterface WMI class
-$SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface 
-
-#check if c:\temp exist
+#check if c:\temp exist / check if RegKey exisit
 if (!(Test-Path $PATH)) {New-Item -Path $PATH -ItemType Directory}
+$RegKeyexist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
 
 #Logging device data
 Write-Output $env:COMPUTERNAME | out-file "$PATH\BIOS_Profile.txt" -Append
 Write-Output "ServiceTag:         $serviceTag" | out-file "$PATH\BIOS_Profile.txt" -Append
 Write-Output "Profile install at: $Date" | out-file "$PATH\BIOS_Profile.txt" -Append
 
+#Connect to the SecurityInterface WMI class
+$SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface
 
 #Checking RegistryKey availbility
 
@@ -74,6 +75,7 @@ if ($RegKeyexist -eq "True")
     $PWKeyOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | select -ExpandProperty BIOS
     $serviceTagOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | select -ExpandProperty ServiceTag
     $AdminPwOld = "$serviceTagOld$PWKeyOld"
+    
     Write-Output "RegKey exist"  | out-file "$PATH\BIOS_Profile.txt" -Append
 
     # Encoding BIOS Password
@@ -83,76 +85,95 @@ if ($RegKeyexist -eq "True")
     }
 Else
     {
+    
     New-Item -path "hklm:\software\Dell\BIOS" -Force
     New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value "" -type string -Force
     New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "ServiceTag" -value "" -type string -Force
     New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Date" -value "" -type string -Force
     New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "" -type string -Force
+    New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Update" -value (Get-Date -Format yyyy-MM-dd) -type string -Force
+    
     Write-Output "RegKey is set"  | out-file "$PATH\BIOS_Profile.txt" -Append
+    
     }
 
 #Checking AdminPW is not set on the machine
 
 If ($PWset -eq $false)
     {
+    
     $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$AdminPw) | select -ExpandProperty Status
 
 #Setting of AdminPW was successful
 
     If ($PWstatus -eq 0)
         {
+        
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $PWKey -type string -Force
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "ServiceTag" -value $serviceTag -type string -Force
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Date" -value $Date -type string -Force
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "Ready" -type string -Force
-
+        New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Update" -value (Get-Date $DateTransfer -Format yyyy-MM-dd) -type string -Force
+        
         Write-Output "Password is set successful for first time"  | out-file "$PATH\BIOS_Profile.txt" -Append
+        
         }
 
 #Setting of AdminPW was unsuccessful
 
     else
         {
+        
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "Error" -type string -Force
         Write-Output "Error Passwort could not set" | out-file "$PATH\BIOS_Profile.txt" -Append
+        
         }
     }
 
 
-#Checking AdminPW is exsting on the machine
+#Check if AdminPW is the same if not it will change AdminPW to new AdminPW
 
 else
     {
     
-#Compare old and new AdminPW are equal
+    #Compare old and new AdminPW are equal
 
     If ($AdminPw -eq $AdminPwOld)
         {
+        
         Write-Output "Password no change" | out-file "$PATH\BIOS_Profile.txt" -Append
 
         }
 
-#Old and new AdminPW are different make AdminPW change
+    #Old and new AdminPW are different make AdminPW change
 
     else
         {
+        
         $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$AdminPwOld,$AdminPw) | select -ExpandProperty Status
 
-#Checking if change was successful
+        #Checking if change was successful
 
         If($PWstatus -eq 0)
             {
+            
             Write-Output "Password is change successful" | out-file "$PATH\BIOS_Profile.txt" -Append
+            
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "Ready" -type string -Force
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $PWKey -type string -Force
+            New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Update" -value (Get-Date $DateTransfer -Format yyyy-MM-dd) -type string -Force
+
             }
 
-#Checking if change was unsuccessful. Most reason is there is a AdminPW is set by user or admin before the profile is enrolled
+        #Checking if change was unsuccessful. Most reason is there is a AdminPW is set by user or admin before the profile is enrolled or RegistryKey does not exist
 
         else
             {
+            
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "Unknown" -type string -Force
+            
             Write-Output "Unknown password on machine. This need to delete first" | out-file "$PATH\BIOS_Profile.txt" -Append
+            
             }
         }
     }
