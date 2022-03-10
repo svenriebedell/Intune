@@ -27,12 +27,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell for remediation by MS Endpoint Manager. This script will set BIOS Thermal Management to "Quiet" on a Dell machine by using WMI.
-   IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   This PowerShell checking by Dell Command Update if the device as any missing driver for severity level Security or critical
+   IMPORTANT: Dell Command Update Universal App is need to install first. https://www.dell.com/support/kbdoc/en-us/000177325/dell-command-update
+   IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using WMI for setting ThermalManagement on the machine. The script checking if any PW is exist and handover the right credentials to WMI for BIOS setting or if no AdminPW is set it make a simple BIOS setting without credentials. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
-   
+   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation. 
 #>
 
 
@@ -42,11 +41,17 @@ $CheckAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassNa
 #Connect to the BIOSAttributeInterface WMI class
 $BAI = Get-WmiObject -Namespace root/dcim/sysman/biosattributes -Class BIOSAttributeInterface
 
+# Change Path
+cd 'C:\Program Files\Dell\CommandUpdate'
+
+
 if ($CheckAdminPW -eq 0)
     {
     
-    # set FastBoot Thorough by WMI
-    $BAI.SetAttribute(0,0,0,"ThermalManagement","Quiet")
+    .\dcu-cli.exe /applyUpdates -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
+
+
+
 
     }
 
@@ -58,12 +63,6 @@ Else
     $serviceTag = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | select -ExpandProperty ServiceTag
     $AdminPw = "$serviceTag$PWKey"
 
-    # Encoding BIOS Password
-    $Encoder = New-Object System.Text.UTF8Encoding
-    $Bytes = $Encoder.GetBytes($AdminPw)
-
-
-    # set FastBoot Thorough by WMI with AdminPW authorization
-    $BAI.SetAttribute(1,$Bytes.Length,$Bytes,"ThermalManagement","Quiet")
+    .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="Dell2022" -password="Dell1234"
 
     }
