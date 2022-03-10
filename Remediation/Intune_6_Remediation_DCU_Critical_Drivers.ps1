@@ -34,6 +34,8 @@ limitations under the License.
    PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation. 
 #>
 
+# Variable
+$PresharedKey = "Dell2022#0123"
 
 # Control check by WMI
 $CheckAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
@@ -42,17 +44,14 @@ $CheckAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassNa
 $BAI = Get-WmiObject -Namespace root/dcim/sysman/biosattributes -Class BIOSAttributeInterface
 
 # Change Path
-cd 'C:\Program Files\Dell\CommandUpdate'
+cd 'C:\Program Files\Dell\CommandUpdate' #if you using DCU 32/64 Bit version you need to change the directory to C:\Program Files (x86)\Dell\CommandUpdate
 
 
 if ($CheckAdminPW -eq 0)
     {
     
     .\dcu-cli.exe /applyUpdates -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
-
-
-
-
+        
     }
 
 Else
@@ -63,6 +62,10 @@ Else
     $serviceTag = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | select -ExpandProperty ServiceTag
     $AdminPw = "$serviceTag$PWKey"
 
-    .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="Dell2022" -password="Dell1234"
+    # generate encrypted BIOS PW
+    $BIOSPWEncrypted = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey=$PresharedKey -password= $AdminPw
 
+    # start update critical drivers
+    .\dcu-cli.exe /applyUpdates -encryptedPassword=$BIOSPWEncrypted -encrptionKey=$PresharedKey -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
+    
     }
