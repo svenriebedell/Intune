@@ -27,11 +27,12 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell for remediation by MS Endpoint Manager. This script will set a BIOS AdminPW on a Dell machine by using WMI.
+   This PowerShell is for remediation by MS Endpoint Manager. This script will set a BIOS AdminPW on a Dell machine by using WMI.
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using WMI for setting AdminPW on the machine. The script checking if any PW is exist and can setup new and change PW. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   Powershell using WMI for setting AdminPW on the machine. The script checking if any PW is exist and can setup new and change PW. 
+   This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for remediation only and need a seperate script for detection additional.
    
 #>
 
@@ -117,6 +118,7 @@ If ($PWset -eq $false)
         
         Write-Output "Password is set successful for first time"  | out-file "$PATH\BIOS_Profile.txt" -Append
         
+        Exit 0
         }
 
 #Setting of AdminPW was unsuccessful
@@ -126,6 +128,8 @@ If ($PWset -eq $false)
         
         New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Status" -value "Error" -type string -Force
         Write-Output "Error Passwort could not set" | out-file "$PATH\BIOS_Profile.txt" -Append
+
+        Exit 1
         
         }
     }
@@ -142,6 +146,8 @@ else
         {
         
         Write-Output "Password no change" | out-file "$PATH\BIOS_Profile.txt" -Append
+
+        Exit 1
 
         }
 
@@ -163,6 +169,8 @@ else
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $PWKey -type string -Force
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Update" -value (Get-Date $DateTransfer -Format yyyy-MM-dd) -type string -Force
 
+            Exit 0
+
             }
 
         #Checking if change was unsuccessful. Most reason is there is a AdminPW is set by user or admin before the profile is enrolled or RegistryKey does not exist
@@ -174,6 +182,8 @@ else
             
             Write-Output "Unknown password on machine. This need to delete first" | out-file "$PATH\BIOS_Profile.txt" -Append
             
+            Exit 0
+
             }
         }
     }

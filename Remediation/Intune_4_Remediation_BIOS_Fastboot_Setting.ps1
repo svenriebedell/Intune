@@ -27,11 +27,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell for remediation by MS Endpoint Manager. This script will set BIOS Fastboot to "Thorough" on a Dell machine by using WMI.
+   This PowerShell is for remediation by MS Endpoint Manager. This script will set BIOS Fastboot to "Thorough" on a Dell machine by using WMI.
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using WMI for setting ThermalManagement on the machine. The script checking if any PW is exist and handover the right credentials to WMI for BIOS setting or if no AdminPW is set it make a simple BIOS setting without credentials. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   Powershell using WMI for setting ThermalManagement on the machine. The script checking if any PW is exist and handover the right credentials to WMI for BIOS setting or if no AdminPW is set it make a simple BIOS setting without credentials. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for remediation only and need a seperate script for detection.
    
 #>
 
@@ -47,6 +47,8 @@ if ($CheckAdminPW -eq 0)
     
     # set FastBoot Thorough by WMI
     $BAI.SetAttribute(0,0,0,"Fastboot","Thorough")
+
+    Exit 0
 
     }
 
@@ -65,5 +67,7 @@ Else
 
     # set FastBoot Thorough by WMI with AdminPW authorization
     $BAI.SetAttribute(1,$Bytes.Length,$Bytes,"Fastboot","Thorough")
+
+    Exit 0
 
     }
