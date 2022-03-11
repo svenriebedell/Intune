@@ -30,15 +30,20 @@ limitations under the License.
 
 try{
    
+    $env:Path='C:\Program Files\Dell\DellOptimizer'
+
+    cd $env:Path
+
+    $DOLearningApps = @(.\do-cli.exe /AppPerformance -listLearningApps | Select-String "ProcessName:") -split(": ")
    
-    if ($BIOSFastBoot -match "Thorough")
+    if ($DOLearningApps -match "Teams.exe")
         {
         write-host "Success"
     	exit 0  
         }
     Else
         {
-        Write-Host "BIOS Fastboot is not Thorough"
+        Write-Host "Teams is not learned by Dell Optimizer"
         exit 1
         }
     }
