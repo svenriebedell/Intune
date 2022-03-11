@@ -20,11 +20,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell checking by WMI if the Client BIOS Fastboot Setting is set to "Thorough"
+   This PowerShell is checking by WMI if the Client BIOS Fastboot Setting is set to "Thorough"
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additonal.
    
 #>
 

@@ -20,13 +20,13 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell checking by the time of last BIOS Admin PW change.
+   This PowerShell is checking if the BIOS AdminPW is older than 180 days and need to be changed.
    IMPORTANT: Works only if you using C:\Users\sven_riebe\Intune\Remediation\Intune_1_and_2_Remediation_BIOS_AdminPW_Setting.ps1 to set AdminPW
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   IMPORTANT: This script does not reboot the system to apply or query system.
 
 .DESCRIPTION
-   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
 #>
 
 try{

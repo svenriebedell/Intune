@@ -25,11 +25,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell checking by Dell Command Update if the device as any missing driver for severity level Security or critical
+   This PowerShell is checking by Dell Command Update if the device as any missing driver for severity level Security or critical
    IMPORTANT: Dell Command Update Universal App is need to install first. https://www.dell.com/support/kbdoc/en-us/000177325/dell-command-update
    IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
    
 #>
 

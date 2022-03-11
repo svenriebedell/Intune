@@ -20,11 +20,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell checking Microsoft Event for the Dell Trusted Device Secure Score and than if the IoA Indicators of attack is not fail.
+   This PowerShell is checking Microsoft Event for the Dell Trusted Device Secure Score and than if the IoA Indicators of attack is failing or not.
    IMPORTANT: Need to install Dell Trusted Device first Version 3.2 or newer
-   IMPORTANT: This script does not reboot the system to apply or query system.  (Put in any reboot requirements if applicable here)
+   IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and new a seperate script for remediation.
+   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
    
 #>
 
