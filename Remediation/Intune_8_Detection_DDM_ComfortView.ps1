@@ -40,23 +40,32 @@ try{
     #Check DDM setting for value ColorModePreset
     $CheckColorMode = get-childitem -recurse HKCU:\Software\EnTech\DCIM | get-itemproperty | where { $_  -match 'Dell*' } | Get-ItemPropertyValue -Name ColorModePreset
     
-
-    if ($CheckColorMode -notmatch 4)
+    If ($CheckColorMode -ne $null)
         {
+
+        if ($CheckColorMode -notmatch 4)
+            {
         
-        write-host "One or more Dell Displays have not ComfortView"
-    	exit 1 
+            write-host "One or more Dell Displays have not ComfortView"
+    	    exit 1 
 
-        }
+            }
 
-    else
-        {
+        else
+            {
             
-        Write-Host "All Dell Displays have ComfortView enabled"
-        #exit 0
+            Write-Host "All Dell Displays have ComfortView enabled"
+            exit 0
+
+            }
+        }
+    Else
+        {
+
+        Write-Host "No Dell Display is attached at the moment"
+        Exit 0
 
         }
-        
     }
 catch
 {
