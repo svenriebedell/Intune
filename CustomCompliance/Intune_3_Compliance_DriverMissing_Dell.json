@@ -1,0 +1,18 @@
+{
+    "Rules":[ 
+        { 
+           "SettingName":"MissingUpdates",
+           "Operator":"isEquals",
+           "DataType":"String",
+           "Operand":"0",
+           "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/command-update/dellcommandupdate_ug/install-updates?guid=guid-2ecd73e2-0593-43f1-8e99-07be35e86bf8&lang=en-us",
+           "RemediationStrings":[ 
+              { 
+                 "Language":"en_US",
+                 "Title":"This device has some missing drivers/FW or BIOS Updates",
+                 "Description": "Missing Hardware Updates"
+              }
+           ]
+        }
+     ]
+}

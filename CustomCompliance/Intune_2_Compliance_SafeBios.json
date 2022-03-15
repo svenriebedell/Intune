@@ -1,0 +1,130 @@
+{
+    "Rules":[ 
+        { 
+           "SettingName":"SecurityScore",
+           "Operator":"GreaterThan",
+           "DataType":"Int64",
+           "Operand":"80",
+           "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/trusted-device/trusted_device/security-risk-protection-score?guid=guid-b7eecd53-a527-4e60-b508-081d821b17d2&lang=en-us",
+           "RemediationStrings":[ 
+              { 
+                 "Language":"en_US",
+                 "Title":"Security Score is {ActualValue} please check for reasons.",
+                 "Description": "Investigation for security is needed"
+              }
+           ]
+        },
+        { 
+           "SettingName":"TPM",
+           "Operator":"IsEquals",
+           "DataType":"String",
+           "Operand":"PASS",
+           "MoreInfoUrl":"https://www.dell.com/support/kbdoc/en-us/000189676/windows-10-how-to-enable-the-tpm-trusted-platform-module",
+           "RemediationStrings":[ 
+              { 
+                 "Language": "en_US",
+                 "Title": "TPM chip must be enabled.",
+                 "Description": "TPM chip must be enabled. Please refer to the link above"
+              }
+           ]
+        },
+        { 
+           "SettingName":"BIOSVerfication",
+           "Operator":"IsEquals",
+           "DataType":"String",
+           "Operand":"PASS",
+           "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/trusted-device/trusted_device/bios-verification?guid=guid-5ee22b5f-f099-4e1a-ac3d-7dcc1d8a1c77&lang=en-us",
+           "RemediationStrings":[ 
+              { 
+                 "Language": "en_US",
+                 "Title": "Trusted Device not installed or supported.",
+                 "Description": "Dell Trusted Device Agent save the BIOS."
+              }
+           ]
+        },
+        { 
+          "SettingName":"DiskEncryption",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://www.dell.com/support/kbdoc/en-us/000125409/how-to-enable-or-disable-bitlocker-with-tpm-in-windows",
+          "RemediationStrings":[ 
+             { 
+                "Language": "en_US",
+                "Title": "Disk Encryption is not enabled for the Device.",
+                "Description": "Go to Microsoft Security Center enable Bitlocker or other solution."
+             }
+           ]
+         },
+         { 
+          "SettingName":"Firewall",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://support.microsoft.com/en-us/windows/turn-microsoft-defender-firewall-on-or-off-ec0844f7-aebd-0583-67fe-601ecf5d774f",
+          "RemediationStrings":[ 
+             { 
+                 "Language": "en_US",
+                 "Title": "Firewall is not enabled for the Device.",
+                 "Description": "Go to Microsoft Security Center enable MS Firewall/Defender or other solution."
+             }
+           ]
+         },
+         { 
+          "SettingName":"AntiVirus",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://docs.microsoft.com/EN-US/mem/intune/user-help/turn-on-defender-windows",
+          "RemediationStrings":[ 
+                 { 
+                    "Language": "en_US",
+                    "Title": "AntiVirus is not enabled for the Device.",
+                    "Description": "Go to Microsoft Security Center enable MS Defender or other solution."
+                 }
+               ]
+         },
+         { 
+          "SettingName":"BIOSAdminPW",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/trusted-device/trusted_device/bios-events-&-indicators-of-attack?guid=guid-8f0b4d74-793e-499f-b41e-46d9445faa9b&lang=en-us",
+          "RemediationStrings":[ 
+                 { 
+                    "Language": "en_US",
+                    "Title": "No BIOS Password is set on the machine.",
+                    "Description": "Asking your administrator to enable a password."
+                 }
+               ]
+         },
+         { 
+          "SettingName":"vProVerification",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/trusted-device/trusted_device/intel-me-verification?guid=guid-bac1f4e2-2700-4c45-a5e0-b45aab57401a&lang=en-us",
+          "RemediationStrings":[ 
+                 { 
+                    "Language": "en_US",
+                    "Title": "vPro Management is effect.",
+                    "Description": "Please contact your administator in behalf of a security issue."
+                 }
+               ]
+         },
+         { 
+          "SettingName":"IndicatorOfAttack",
+          "Operator":"IsEquals",
+          "DataType":"String",
+          "Operand":"PASS",
+          "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/trusted-device/trusted_device/bios-events-&-indicators-of-attack?guid=guid-8f0b4d74-793e-499f-b41e-46d9445faa9b&lang=en-us",
+          "RemediationStrings":[ 
+                 { 
+                    "Language": "en_US",
+                    "Title": "BIOS settings need to be check.",
+                    "Description": "Please contact your administator in behalf of a security issue."
+                 }
+               ]
+         }      
+     ]
+    }
