@@ -1,7 +1,7 @@
 ﻿<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0
+_version_ = 1.0.1
 _Dev_Status_ = Test
 Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
@@ -18,6 +18,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 #>
 
+<#Changes
+1.0.0 initial Version
+1.0.1 Change line 37 from InstanceID 15 to Source "Trusted Device | Security Assessment"
+#>
+
 <#
 .Synopsis
    This PowerShell is checking Microsoft Event for the Dell Trusted Device Secure Score and than if the IoA Indicators of attack is failing or not.
@@ -30,7 +35,7 @@ limitations under the License.
 
 try{
     # Check if Safe BIOS IOA is failed
-    $SelectLastLog = Get-EventLog -LogName Dell -InstanceId 15 -Newest 1 | select -ExpandProperty message
+    $SelectLastLog = Get-EventLog -LogName Dell -Source "Trusted Device | Security Assessment" -Newest 1 | select -ExpandProperty message
     $SelectIOA = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Indicators of Attack')
     $CheckIOA = ($SelectIOA.Line).Split(' ')
 
