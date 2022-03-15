@@ -26,7 +26,7 @@ limitations under the License.
    IMPORTANT: This script does not reboot the system to apply or query system.
 
 .DESCRIPTION
-   PowerShell to import as Dection Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
+   PowerShell to import as Decetion Script for Microsoft Endpoint Manager. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
 #>
 
 try{
