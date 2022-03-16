@@ -27,21 +27,38 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell is for custom compliance scans and is checking this device of chassis intrusions.
-   IMPORTANT: This scipt need a client installation of Dell Command Update UWP first. https://www.dell.com/support/kbdoc/en-us/000177325/dell-command-update
+   This PowerShell is for custom compliance scans and is checking this device of BIOS setting Intrusion detection was enabled and Intrusion Status.
+   IMPORTANT: This scipt need a client installation of Dell Command Monitor https://www.dell.com/support/kbdoc/en-us/000177080/dell-command-monitor
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
    IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using WMI to check the BIOS value of chassis intrusion. This script need to be upload in Intune Compliance / Script and need a JSON file additional for reporting this value.
+   Powershell using WMI to check the BIOS value of chasintrusion and ChassisIntrusionStatus. This script need to be upload in Intune Compliance / Script and need a JSON file additional for reporting this value.
    
 #>
 
 # check chassis intrusion with WMI
-$CheckChassis = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName like 'ChasIntrusion'" | select -ExpandProperty CurrentValue
+$CheckChassisSetting = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName like 'ChasIntrusion'" | select -ExpandProperty CurrentValue
+$CheckIntrusion = Get-CimInstance -Namespace root/dcim/sysman -ClassName DCIM_BIOSEnumeration -Filter "AttributeName like 'Chassis Intrusion Status'" | select -ExpandProperty CurrentValue
 
+<#
+ChasIntrusion
+Disabled = no logging
+Enabled = logging with post boot alert
+SilentEnable =logging without post boot alert
+
+
+
+Chassis Intrusion Status
+
+1 = Tripped
+2 = Door open
+3 = Door closed
+4 = Trip reset
+
+#>
 
 #prepare variable for Intune
-$hash = @{ Intrusion = $CheckChassis }
+$hash = @{ IntrusionSetting = $CheckChassisSetting; IntrusionStatus = $CheckIntrusion }
 
 #convert variable to JSON format
 return $hash | ConvertTo-Json -Compress
