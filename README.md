@@ -1,5 +1,7 @@
-# Intune_Compliance
+# Intune Examples for Custom Compliance and Detection/Remediation with Dell Clients
 
-Repository of my Intune Powershell and JSON files. 
+This repository includes some examples to manage Dell Clients with Microsoft Endpoint Manager
 
-Please beware some of this could be for testing only. Using is for on risk without support.
+This repository is for testing as well. You can use all script free of charge but on your own risk and support.
+
+
