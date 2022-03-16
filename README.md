@@ -27,22 +27,34 @@ The Microsoft Intune management extension allows you to upload the PowerShell sc
 Client script library
 This GitHub library offers the PowerShell scripts that illustrate the usage of the agentless BIOS manageability to perform the following 
 
-Remediation/Detection operations:
+
+#Remediation/Detection operations:
 
 Configure BIOS passwords
+
 Configure BIOS attribute(s)
+
 Configure BIOS Password change after specific time
+
 Checking/update missing critical drivers
+
 Checking/Configure Display settings
+
 Checking Dell SafeBIOS status
 
-Custom Compliance:
+
+#Custom Compliance:
 Checking Support Contract
+
 Checking Dell SafeBIOS
+
 Checking missing critical drivers
+
 Checking chassis intrusion
 
-Prerequisites
+
+
+#Prerequisites
 Dell commercial client systems that are released to market after calendar year 2018
 Windows operating system
 PowerShell 5.0 or later
@@ -50,7 +62,9 @@ Support
 This code is provided to help the open-source community and currently not supported by Dell.
 
 Install Dell Display Manager delldisplaymanager.com
+
 Install Dell Trusted Device Agent https://www.dell.com/support/home/en-us/product-support/product/trusted-device/drivers
+
 Install Dell Command Update Universal Windows Plattform (Win10/11 Version) https://www.dell.com/support/kbdoc/en-us/000177325/dell-command-update
 
 Provide feedback or report an issue
