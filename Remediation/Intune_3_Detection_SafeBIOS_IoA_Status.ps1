@@ -39,7 +39,7 @@ try{
     $SelectIOA = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Indicators of Attack')
     $CheckIOA = ($SelectIOA.Line).Split(' ')
 
-    if ($CheckIOA -match "True")
+    if ($CheckIOA[5] -match "PASS")
         {
         write-host "Success"
     	exit 0  
