@@ -51,6 +51,8 @@ if ($CheckAdminPW -eq 0)
     $BAI.SetAttribute(0,0,0,"CapsuleFirmwareUpdate","Disabled")
     $BAI.SetAttribute(0,0,0,"WakeOnDock","Disabled")
 
+    Write-Output "BIOS settings without BIOS PW possible"
+
     Exit 0
     }
 
@@ -73,5 +75,7 @@ Else
     $BAI.SetAttribute(1,$Bytes.Length,$Bytes,"CapsuleFirmwareUpdate","Disabled")
     $BAI.SetAttribute(1,$Bytes.Length,$Bytes,"WakeOnDock","Disabled")
     
+    Write-Output "BIOS settings needs BIOS PW"
+
     Exit 0
     }
