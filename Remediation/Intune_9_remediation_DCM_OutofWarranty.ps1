@@ -115,11 +115,13 @@ If ($Duration -le 45)
             }
         }  
 
-    Else
-        {
-
-        Write-Output "Device has more than 45 days of support"
-        exit 0
-                
-        }
     }
+    
+Else
+    {
+
+    Write-Output "Device has more than 45 days of support"
+    exit 0
+                
+    }
+    
