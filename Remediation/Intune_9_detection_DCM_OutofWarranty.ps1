@@ -27,11 +27,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell is for remediation and is checking the support contract time of this device by Dell Command Monitor (DCM) and User will informed by popup to order a new device. User need to click ok otherwise he will informed again.
+   This PowerShell is for detection and is checking the support contract time of this device by Dell Command Monitor (DCM).
    IMPORTANT: This scipt need a client installation of Dell Command Monitor https://www.dell.com/support/kbdoc/en-us/000177080/dell-command-monitor
    IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using Dell Command Monitor WMI to check the support contract time of the device. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for remediation only and need a seperate script for detection additional.
+   Powershell using Dell Command Monitor WMI to check the support contract time if less than 45 days of this device. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for detection only and need a seperate script for remediation additional.
    
 #>
 
@@ -42,39 +42,70 @@ $WarrantyEndSelect = $WarrantyEnd[0] -split ","
 $WarrantyDate = $WarrantyEndSelect -split " "
 [datetime]$FinalDate = $WarrantyDate.GetValue(0)
 
+
+
+
 # Check availible support days
 $Today = Get-Date
 $Duration = New-TimeSpan -Start $Today -End $FinalDate
 
-#Checking warranty and inform user 45 days before out of warranty and out of warrenty
 
-Test-Path -path "HKLM:\SOFTWARE\Dell\Warranty"
+#Check if the registry for Warranty Status still exit
+$CheckReg = Test-Path -path "HKLM:\SOFTWARE\Dell\Warranty"
 
-If ($Duration -le 45)
+If ($CheckReg -match "True")
     {
 
-    If ($Duration -le 0)
+    #if Registry exit checking value of property Warrant
+    $CheckStatus = Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Dell\Warranty -Name Info
+    Write-Host "Registry Value requested"
+
+    If ($CheckStatus -match "OutofWarranty")
         {
-        
-        Write-Host "Device out of Service"
+
+        Write-Host "Device is out of support and user was informed"
         exit 0
 
         }
     Else
         {
-        
-        Write-Output "Device less than 45 days of support"
-        exit 0
-      
+
+        if ($Duration -le 0)
+            {
+
+            Write-Host "Device has no support anymore"
+            Exit 1
+
+            }
+        Else
+            {
+
+            Write-Output "Device is running out of support and user is informed"
+            Exit 0
+            
+            }
         }
+
     }
-    
 Else
     {
 
-    Write-Output "Device has more than 45 days of support"
-    exit 0
-                
-    }
+    If ($Duration -ge 45)
+        {
 
-    Test-Path -Path HKLM:\SOFTWARE\DELL\UpdateService\Service\IgnoreList\ -
+        Write-Host "Device has more than 45 days of support"
+        exit 0
+        
+        }
+    Else
+        {
+
+        Write-Host "Device has less than 45 days of support"
+        exit 1
+
+        }
+
+  
+    }
+    
+    
