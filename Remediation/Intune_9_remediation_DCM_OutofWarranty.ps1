@@ -67,7 +67,6 @@ function Show-Notification {
 }
 
 
-<#
 # prepare Dell Warranty date for compare with actual date
 $WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending | select -ExpandProperty WarrantyEndDate 
 $WarrantyEndSelect = $WarrantyEnd[0] -split ","
@@ -77,9 +76,7 @@ $WarrantyDate = $WarrantyEndSelect -split " "
 # Check availible support days
 $Today = Get-Date
 $Duration = New-TimeSpan -Start $Today -End $FinalDate
-#>
 
-$Duration = 0
 
 #Checking warranty and inform user 45 days before out of warranty and out of warrenty
 

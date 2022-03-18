@@ -35,39 +35,7 @@ limitations under the License.
    
 #>
 
-# function for Toast Notication. Souce code from https://den.dev/blog/powershell-windows-notification/
-function Show-Notification {
-    [cmdletbinding()]
-    Param (
-        [string]
-        $ToastTitle,
-        [string]
-        [parameter(ValueFromPipeline)]
-        $ToastText
-    )
 
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
-    $Template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-
-    $RawXml = [xml] $Template.GetXml()
-    ($RawXml.toast.visual.binding.text|where {$_.id -eq "1"}).AppendChild($RawXml.CreateTextNode($ToastTitle)) > $null
-    ($RawXml.toast.visual.binding.text|where {$_.id -eq "2"}).AppendChild($RawXml.CreateTextNode($ToastText)) > $null
-
-
-    $SerializedXml = New-Object Windows.Data.Xml.Dom.XmlDocument
-    $SerializedXml.LoadXml($RawXml.OuterXml)
-
-    $Toast = [Windows.UI.Notifications.ToastNotification]::new($SerializedXml)
-    $Toast.Tag = "PowerShell"
-    $Toast.Group = "PowerShell"
-    #$Toast.ExpirationTime = [DateTimeOffset]::Now.AddMinutes(120)
-
-    $Notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("PowerShell")
-    $Notifier.Show($Toast);
-}
-
-
-<#
 # prepare Dell Warranty date for compare with actual date
 $WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending | select -ExpandProperty WarrantyEndDate 
 $WarrantyEndSelect = $WarrantyEnd[0] -split ","
@@ -77,34 +45,25 @@ $WarrantyDate = $WarrantyEndSelect -split " "
 # Check availible support days
 $Today = Get-Date
 $Duration = New-TimeSpan -Start $Today -End $FinalDate
-#>
-
-$Duration = 0
 
 #Checking warranty and inform user 45 days before out of warranty and out of warrenty
+
+Test-Path -path "HKLM:\SOFTWARE\Dell\Warranty"
 
 If ($Duration -le 45)
     {
 
-    #setup a registrykey to control user has read this information
-    New-Item -path "HKLM:\SOFTWARE\Dell\Warranty" -Force
-
-
     If ($Duration -le 0)
         {
         
-        Show-Notification -ToastTitle "Out of Warranty" -ToastText "This Device is out of Service. Please open Service Now Ticket to order a new device. This device will have resticted access in the future."
-        New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "OutofWarranty" -type string -Force
-        Write-Output "Device has no support and user is informed"
+        Write-Host "Device out of Service"
         exit 0
 
         }
     Else
         {
         
-        Show-Notification -ToastTitle "Out of Warranty" -ToastText "This Device is out of Service in $duration day(s). Please open Service Now Ticket to order a new device."
-        New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "informed" -type string -Force
-        Write-Output "Device has no support and user is informed"
+        Write-Output "Device less than 45 days of support"
         exit 0
       
         }
@@ -117,3 +76,5 @@ Else
     exit 0
                 
     }
+
+    Test-Path -Path HKLM:\SOFTWARE\DELL\UpdateService\Service\IgnoreList\ -
