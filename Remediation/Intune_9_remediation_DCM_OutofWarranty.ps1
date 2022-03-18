@@ -35,9 +35,37 @@ limitations under the License.
    
 #>
 
+# function for Toast Notication. Souce code from https://den.dev/blog/powershell-windows-notification/
+function Show-Notification {
+    [cmdletbinding()]
+    Param (
+        [string]
+        $ToastTitle,
+        [string]
+        [parameter(ValueFromPipeline)]
+        $ToastText
+    )
 
-# Time popup is closing
-$PopupTime = 20 #time in sec.
+    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+    $Template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+
+    $RawXml = [xml] $Template.GetXml()
+    ($RawXml.toast.visual.binding.text|where {$_.id -eq "1"}).AppendChild($RawXml.CreateTextNode($ToastTitle)) > $null
+    ($RawXml.toast.visual.binding.text|where {$_.id -eq "2"}).AppendChild($RawXml.CreateTextNode($ToastText)) > $null
+
+
+    $SerializedXml = New-Object Windows.Data.Xml.Dom.XmlDocument
+    $SerializedXml.LoadXml($RawXml.OuterXml)
+
+    $Toast = [Windows.UI.Notifications.ToastNotification]::new($SerializedXml)
+    $Toast.Tag = "PowerShell"
+    $Toast.Group = "PowerShell"
+    #$Toast.ExpirationTime = [DateTimeOffset]::Now.AddMinutes(120)
+
+    $Notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("PowerShell")
+    $Notifier.Show($Toast);
+}
+
 
 <#
 # prepare Dell Warranty date for compare with actual date
@@ -51,7 +79,7 @@ $Today = Get-Date
 $Duration = New-TimeSpan -Start $Today -End $FinalDate
 #>
 
-$Duration = 50
+$Duration = 0
 
 #Checking warranty and inform user 45 days before out of warranty and out of warrenty
 
@@ -65,56 +93,21 @@ If ($Duration -le 45)
     If ($Duration -le 0)
         {
         
-        #creating object os WScript
-        $wshell = New-Object -ComObject Wscript.Shell -ErrorAction Stop
-        #invoking the POP method using object
-        $CheckUserFeedback = $wshell.Popup("This Device is since $Duration Days of of Service. Please, you should open a ServiceNow case to get a new device. If you ignore this message your device will deactivate soon.",$PopupTime,"Device Out of Warranty",64)
+        Show-Notification -ToastTitle "Out of Warranty" -ToastText "This Device is out of Service. Please open Service Now Ticket to order a new device. This device will have resticted access in the future."
+        New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "OutofWarranty" -type string -Force
+        Write-Output "Device has no support and user is informed"
+        exit 0
 
-        If ($CheckUserFeedback -notmatch 1)
-            {
-
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "no confirmation" -type string -Force
-            Write-Output "Device has no support and user ignored message"
-            exit 1
-
-            }
-        
-        Else
-            {
-
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "Informed" -type string -Force
-            Write-Output "Device has no support and user is informed"
-            exit 0
-
-            }
         }
     Else
         {
-
-        #creating object os WScript
-        $wshell = New-Object -ComObject Wscript.Shell -ErrorAction Stop
-        #invoking the POP method using object
-        $CheckUserFeedback = $wshell.Popup("This Device will be out of service in $Duration Days. Please, you should open a ServiceNow case to get a new device. If you ignore this message your device will deactivate soon.",$PopupTime,"Device Out of Warranty",64)
-
-        If ($CheckUserFeedback -notmatch 1)
-            {
-
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "no confirmation" -type string -Force
-            Write-Output "Device has less than 45 days of support and user ignored message"
-            exit 1
-
-            }
         
-        Else
-            {
-
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "Informed" -type string -Force
-            Write-Output "Device has less than 45 days of support and user is informed"
-            exit 0
-
-            }
-        }  
-
+        Show-Notification -ToastTitle "Out of Warranty" -ToastText "This Device is out of Service in $duration day(s). Please open Service Now Ticket to order a new device."
+        New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "informed" -type string -Force
+        Write-Output "Device has no support and user is informed"
+        exit 0
+      
+        }
     }
     
 Else
@@ -124,4 +117,3 @@ Else
     exit 0
                 
     }
-    
