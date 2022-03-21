@@ -82,6 +82,9 @@ If ($Duration -le 45)
            
         New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "informed" -type string -Force
         Write-Output "Device has no support and user is informed"
+
+        #select only support days for notification
+        $SupportDays = $Duration.Days
         
         #generate User Notification
         Add-Type -AssemblyName System.Windows.Forms 
@@ -89,7 +92,7 @@ If ($Duration -le 45)
         $path = (Get-Process -id $pid).Path
         $balloon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($path) 
         $balloon.BalloonTipIcon = [System.Windows.Forms.ToolTipIcon]::Warning 
-        $balloon.BalloonTipText = 'This Device is out of Service in $duration day(s). Please open Service Now Ticket to order a new device.'
+        $balloon.BalloonTipText = "This Device is out of Service in $SupportDays day(s). Please open Service Now Ticket to order a new device."
         $balloon.BalloonTipTitle = "Out of Warranty" 
         $balloon.Visible = $true 
         $balloon.ShowBalloonTip(15000)
