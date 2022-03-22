@@ -1,7 +1,7 @@
 ﻿<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.0
+_version_ = 1.0.1
 _Dev_Status_ = Test
 Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
@@ -21,6 +21,7 @@ limitations under the License.
 <#Version Changes
 
 1.0.0   inital version
+1.0.1   integrated function for selection values and rework String Cut by select last Word
 
 
 #>
@@ -35,40 +36,42 @@ limitations under the License.
    
 #>
 
+ 
+# Function for snipping SafeBIOS values from the MS Event
+function Get-SafeBIOSValue{
+    
+    # Parameter
+    param(
+        [string]$Value
+        
+         )
 
-# Collect last MS Event for Trusted Device | Security Assessment
-$SelectLastLog = Get-EventLog -LogName Dell -Source "Trusted Device | Security Assessment" -Newest 1 | select -ExpandProperty message
+    # Collect last MS Event for Trusted Device | Security Assessment
+    $SelectLastLog = Get-EventLog -LogName Dell -Source "Trusted Device | Security Assessment" -Newest 1 | select -ExpandProperty message
+    
+    # Prepare value for single line and value
+     
+    $ScoreValue = ($SelectLastLog.Split([Environment]::newline) | Select-String $Value)
+    $ScoreLine = ($ScoreValue.Line).Split(' ')[-1]
 
-# Prepare value for single line and value
-$SelectScore = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Score')
-$SelectAntivirus = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Antivirus')
-$SelectAdminPW = ($SelectLastLog.Split([Environment]::newline) | Select-String 'BIOS Admin')
-$SelectBIOSVerify = ($SelectLastLog.Split([Environment]::newline) | Select-String 'BIOS Verification')
-$SelectMEVerify = ($SelectLastLog.Split([Environment]::newline) | Select-String 'ME Verification')
-$SelectDiskEncrypt = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Disk Encryption')
-$SelectFirewall = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Firewall solution')
-$SelectIOA = ($SelectLastLog.Split([Environment]::newline) | Select-String 'Indicators of Attack')
-$SelectTPM = ($SelectLastLog.Split([Environment]::newline) | Select-String 'TPM enabled')
+    $ScoreValue = $ScoreLine
 
-$OutputScore = ($SelectScore.Line).Split(' ')
-$OutputAntivirus = ($SelectAntivirus.Line).Split(' ')
-$OutputAdminPW = ($SelectAdminPW.Line).Split(' ')
-$OutputBIOSVerify =($SelectBIOSVerify.Line).Split(' ')
-$OutputMEVerify = ($SelectMEVerify.Line).Split(' ')
-$OutputDiskEncrypt = ($SelectDiskEncrypt.Line).Split(' ')
-$OutputFirewall = ($SelectFirewall.Line).Split(' ')
-$OutputIOA = ($SelectIOA.Line).Split(' ')
-$OutputTPM = ($SelectTPM.Line).Split(' ')
+    Return $ScoreValue
+     
+}
 
-$OutputScore = ($SelectScore.Line).Split(' ')
-$OutputAntivirus = ($SelectAntivirus.Line).Split(' ')
-$OutputAdminPW = ($SelectAdminPW.Line).Split(' ')
-$OutputBIOSVerify =($SelectBIOSVerify.Line).Split(' ')
-$OutputMEVerify = ($SelectMEVerify.Line).Split(' ')
-$OutputDiskEncrypt = ($SelectDiskEncrypt.Line).Split(' ')
-$OutputFirewall = ($SelectFirewall.Line).Split(' ')
-$OutputIOA = ($SelectIOA.Line).Split(' ')
-$OutputTPM = ($SelectTPM.Line).Split(' ')
+#Select score values
+$OutputScore = Get-SafeBIOSValue -Value 'Score'
+$OutputAntivirus = Get-SafeBIOSValue -Value 'Antivirus'
+$OutputAdminPW = Get-SafeBIOSValue -Value 'BIOS Admin'
+$OutputBIOSVerify = Get-SafeBIOSValue -Value 'BIOS Verification'
+$OutputMEVerify = Get-SafeBIOSValue -Value 'ME Verification'
+$OutputDiskEncrypt = Get-SafeBIOSValue -Value 'Disk Encryption'
+$OutputFirewall = Get-SafeBIOSValue -Value 'Firewall solution'
+$OutputIOA = Get-SafeBIOSValue -Value 'Indicators of Attack'
+$OutputTPM = Get-SafeBIOSValue -Value 'TPM enabled'
+
+
 
 # Devices without vPro should be pass the later compliance process as well but Intune could be handle only Pass or Fail, all devices without vPro Pass this section
 if ($OutputMEVerify -match 'UNAVAILABLE')
@@ -81,7 +84,7 @@ Else
     }
 
 #prepare variable for Intune
-$hash = @{ SecurityScore = $OutputScore[1]; AntiVirus = $OutputAntivirus[6]; BIOSAdminPW = $OutputAdminPW[5]; BIOSVerfication = $OutputBIOSVerify[3]; DiskEncryption = $OutputDiskEncrypt[3];Firewall = $OutputFirewall[6]; IndicatorOfAttack = $OutputIOA[5]; TPM = $OutputTPM[3]; vProVerification = $OutputMEVerify[3]} 
+$hash = @{ SecurityScore = $OutputScore; AntiVirus = $OutputAntivirus; BIOSAdminPW = $OutputAdminPW; BIOSVerfication = $OutputBIOSVerify; DiskEncryption = $OutputDiskEncrypt;Firewall = $OutputFirewall; IndicatorOfAttack = $OutputIOA; TPM = $OutputTPM; vProVerification = $OutputMEVerify} 
 
 #convert variable to JSON format
 return $hash | ConvertTo-Json -Compress
