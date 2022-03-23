@@ -2,9 +2,15 @@
 
 This repository includes some examples to manage Dell Clients with Microsoft Endpoint Manager. Sample scripts are written in PowerShell that illustrates the usage of these scripts with UEM management and dashboarding and analytics platforms to provide various data elements from Dell client tools or OS.
 
-All Code is free for us, but without out support and warranty.
-Please beware script with the Tag Dev_Status_ = Test are Alpha Version it could be they does not work correctly. 
+Legal disclaimer:
+THE INFORMATION IN THIS PUBLICATION IS PROVIDED 'AS-IS.' DELL MAKES NO REPRESENTATIONS OR WARRANTIES OF ANY KIND WITH RESPECT TO THE INFORMATION IN THIS PUBLICATION,
+AND SPECIFICALLY DISCLAIMS IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+In no event shall Dell Technologies, its affiliates or suppliers, be liable for any damages whatsoever arising from or related to the information contained herein or
+actions that you decide to take based thereon, including any direct, indirect, incidental, consequential, loss of business profits or special damages,
+even if Dell Technologies, its affiliates or suppliers have been advised of the possibility of such damages.
 
+
+Please beware script with the Tag Dev_Status_ = Test are Alpha Version it could be they does not work correctly. 
 
 
 Windows Management Instrumentation and PowerShell
@@ -31,27 +37,29 @@ This GitHub library offers the PowerShell scripts that illustrate the usage of t
 
 #Remediation/Detection operations:
 
-Configure BIOS passwords
+Configure BIOS passwords  -  Setting Admin PW on machines without AdminPW
 
-Configure BIOS attribute(s)
+Configure BIOS attribute(s) - Setting Fastboot and Thermal Settings
 
-Configure BIOS Password change after specific time
+Configure BIOS Password change after specific time - helping Admin to renew BIOS Admin PW on a regular base
 
-Checking/update missing critical drivers
+Checking/update missing critical drivers - Using Dell Command Update to identify devices with critical driver updates missing
 
-Checking/Configure Display settings
+Checking/Configure Display settings - Usind Dell Display Manager to set ComfortView on Dell Displays
 
-Checking Dell SafeBIOS status
+Checking Dell SafeBIOS status - Using Trusted Device Agent to identify devices where BIOS settings need to change for Idicators of Attack requirements
+
+Checking Warrenty Time - Using Dell Command Monitor for check duration time of warranty and inform user by notification if it less 45 days
 
 
 #Custom Compliance:
-Checking Support Contract
+Checking Support Contract - Checikg with Dell Comma´nd Monitor rest time of support
 
-Checking Dell SafeBIOS
+Checking Dell SafeBIOS - Using Dell Trusted Device Security Assesement to check all security values of a device
 
-Checking missing critical drivers
+Checking missing critical drivers - Using Dell Command Update to identify devices with critical driver updates missing
 
-Checking chassis intrusion
+Checking chassis intrusion - Using Dell Command Monitor to check if device chassis was opened
 
 
 
