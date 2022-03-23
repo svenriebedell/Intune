@@ -21,7 +21,6 @@ limitations under the License.
 <#Version Changes
 
 1.0.0   inital version
-1.0.1   Change method of toast message to cover user context problem
 
 
 #>
@@ -31,6 +30,7 @@ limitations under the License.
    This PowerShell is for remediation and is checking the support contract time of this device by Dell Command Monitor (DCM) and User will informed by popup to order a new device. User need to click ok otherwise he will informed again.
    IMPORTANT: This scipt need a client installation of Dell Command Monitor https://www.dell.com/support/kbdoc/en-us/000177080/dell-command-monitor
    IMPORTANT: This script does not reboot the system to apply or query system.
+   IMPORTANT: The user need local adminrights on his machine otherwise th Notification does not working.
 .DESCRIPTION
    Powershell using Dell Command Monitor WMI to check the support contract time of the device. This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for remediation only and need a seperate script for detection additional.
    
