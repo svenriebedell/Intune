@@ -2,7 +2,8 @@
 
 This repository includes some examples to manage Dell Clients with Microsoft Endpoint Manager. Sample scripts are written in PowerShell that illustrates the usage of these scripts with UEM management and dashboarding and analytics platforms to provide various data elements from Dell client tools or OS.
 
-This repository is for testing as well. You can use all script free of charge but on your own risk and support.
+All Code is free for us, but without out support and warranty.
+Please beware script with the Tag Dev_Status_ = Test are Alpha Version it could be they does not work correctly. 
 
 
 
