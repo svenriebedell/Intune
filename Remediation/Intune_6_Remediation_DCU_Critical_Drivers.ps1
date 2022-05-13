@@ -21,6 +21,7 @@ limitations under the License.
 <#Version Changes
 
 1.0.0   initial version
+1.0.1   solve problem with Var $BIOSPWEncrypted
 
 
 #>
@@ -63,7 +64,8 @@ Else
     $AdminPw = "$serviceTag$PWKey"
 
     # generate encrypted BIOS PW
-    $BIOSPWEncrypted = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
+    $BIOSPWEncrypted_Temp = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
+    $BIOSPWEncrypted = $BIOSPWEncrypted_Temp[1]
 
     # start update critical drivers
     .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
