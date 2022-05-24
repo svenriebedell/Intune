@@ -45,7 +45,7 @@ $BAI = Get-WmiObject -Namespace root/dcim/sysman/biosattributes -Class BIOSAttri
 if ($CheckAdminPW -eq 0)
     {
     
-    # set FastBoot Thorough by WMI
+    # set Thermalmode "Quiet" by WMI
     $BAI.SetAttribute(0,0,0,"ThermalManagement","Quiet")
     
     Exit 0
@@ -65,7 +65,7 @@ Else
     $Bytes = $Encoder.GetBytes($AdminPw)
 
 
-    # set FastBoot Thorough by WMI with AdminPW authorization
+    # set Thermalmode "Quiet" by WMI with AdminPW authorization
     $BAI.SetAttribute(1,$Bytes.Length,$Bytes,"ThermalManagement","Quiet")
 
     Exit 0
