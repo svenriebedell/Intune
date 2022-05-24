@@ -63,7 +63,8 @@ Else
     $AdminPw = "$serviceTag$PWKey"
 
     # generate encrypted BIOS PW
-    $BIOSPWEncrypted = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
+    $BIOSPWEncryptedTemp = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
+    $BIOSPWEncrypted = $BIOSPWEncryptedTemp[1]
 
     # start update critical drivers
     .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
