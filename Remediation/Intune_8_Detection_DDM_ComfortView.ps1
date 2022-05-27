@@ -33,14 +33,14 @@ try{
     
     #running inventory by Dell Display Manager
     $env:Path ='C:\Program Files (x86)\Dell\Dell Display Manager'
-    cd $env:Path
+    Set-Location $env:Path
     Start-Process -FilePath "ddm.exe" -ArgumentList "/inventory DCIM" -Wait
 
 
     #Check DDM setting for value ColorModePreset
-    $CheckColorMode = get-childitem -recurse HKCU:\Software\EnTech\DCIM | get-itemproperty | where { $_  -match 'Dell*' } | Get-ItemPropertyValue -Name ColorModePreset
+    $CheckColorMode = get-childitem -recurse HKCU:\Software\EnTech\DCIM | get-itemproperty | Where-Object { $_  -match 'Dell*' } | Get-ItemPropertyValue -Name ColorModePreset
     
-    If ($CheckColorMode -ne $null)
+    If ($null -ne $CheckColorMode)
         {
 
         if ($CheckColorMode -notmatch 4)
