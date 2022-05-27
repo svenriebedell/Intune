@@ -32,13 +32,13 @@ limitations under the License.
 try{
     
     #Check if AdminPW is set on the machine
-    $BIOSAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
+    $BIOSAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
          
     if ($BIOSAdminPW -match "1")
         {
         
         #check if BIOS password older that 180 days
-        $DateExpire = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name Update | select -ExpandProperty Update
+        $DateExpire = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name Update | Select-Object -ExpandProperty Update
 
         if ((Get-Date -Format yyyyMMdd) -le (Get-Date $DateExpire -Format yyyyMMdd))
             {
