@@ -1,4 +1,4 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0.0
@@ -41,7 +41,7 @@ $env:Path = 'C:\Program Files\Dell\DellOptimizer'
 $CheckAppPerformence = @(.\do-cli.exe /get -name=AppPerformance.State | Select-String "Value") -split(": ")
 
 #Check if AppPerformance is enabled on the device
-CD $env:Path
+Set-Location $env:Path
 
 If ($CheckAppPerformence[1] -match "True")
     {
