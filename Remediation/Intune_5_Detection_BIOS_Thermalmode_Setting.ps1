@@ -31,7 +31,7 @@ limitations under the License.
 try{
    
     # Check BIOS AttributName ThermalSetting is Value Quiet
-    $BIOSThermal = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='ThermalManagement'" |select -ExpandProperty CurrentValue
+    $BIOSThermal = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='ThermalManagement'" |Select-Object -ExpandProperty CurrentValue
 
     if ($BIOSThermal -match "Quiet")
         {
