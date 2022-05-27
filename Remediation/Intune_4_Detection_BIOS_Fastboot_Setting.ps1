@@ -31,7 +31,7 @@ limitations under the License.
 try{
    
     # Check BIOS AttributName Fastboot is set Thorough
-    $BIOSFastBoot = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='Fastboot'" |select -ExpandProperty CurrentValue
+    $BIOSFastBoot = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='Fastboot'" | Select-Object -ExpandProperty CurrentValue
 
     if ($BIOSFastBoot -match "Thorough")
         {
