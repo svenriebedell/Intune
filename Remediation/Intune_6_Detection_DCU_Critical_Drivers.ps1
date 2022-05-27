@@ -1,4 +1,4 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0.0
@@ -36,8 +36,7 @@ limitations under the License.
 try{
     
     # Check if device have Security or Critcal missing drivers
-
-    cd 'C:\Program Files\Dell\CommandUpdate'
+    Set-Location 'C:\Program Files\Dell\CommandUpdate'
     $UpdateCheck = .\dcu-cli.exe /scan -updateSeverity='Security,Critical' | Select-String "Number of applicable updates for the current system configuration: "
     $UpdateCount = $UpdateCheck.Line.TrimStart('Number of applicable updates for the current system configuration: ')
     
