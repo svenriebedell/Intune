@@ -31,7 +31,7 @@ limitations under the License.
 try{
    
     # Check BIOS AttributName AdminPW is set
-    $BIOSAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
+    $BIOSAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
 
     if ($BIOSAdminPW -match "1")
         {
