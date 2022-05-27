@@ -38,7 +38,7 @@ limitations under the License.
 
 
 # prepare Dell Warranty date for compare with actual date
-$WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending | select -ExpandProperty WarrantyEndDate 
+$WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending | Select-Object -ExpandProperty WarrantyEndDate 
 $WarrantyEndSelect = $WarrantyEnd[0] -split ","
 $WarrantyDate = $WarrantyEndSelect -split " "
 [datetime]$FinalDate = $WarrantyDate.GetValue(0)
