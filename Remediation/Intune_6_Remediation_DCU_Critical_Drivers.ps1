@@ -52,15 +52,15 @@ Set-Location $env:Path
 if ($CheckAdminPW -eq 0)
     {
     
-    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
+    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -updateSeverity='Security,Critical' -autoSuspendBitLocker=enable
     $bootCheck = ($BootCheckTemp.TrimStart('The program exited with return code: '))[-1]
     
     # BIOS Updates need a restart if device shutdown by user the update need run again. Timer for restart 1hour
     If($BootCheck -eq 1)
         {
         
-        shutdown /r /t 3600 /c "The Device will be shutdown in 1 hour. Save your work!"
-        
+        #Restart device
+        C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
         }
@@ -89,15 +89,15 @@ Else
 
 
     # start update critical drivers
-    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
+    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -updateSeverity='Security,Critical' -autoSuspendBitLocker=enable
     $bootCheck = ($BootCheckTemp.TrimStart('The program exited with return code: '))[-1]
 
     # BIOS Updates need a restart if device shutdown by user the update need run again. Timer for restart 1hour
     If($BootCheck -eq 1)
         {
         
-        shutdown /r /t 3600 /c "The Device will be shutdown in 1 hour. Save your work!"
-
+        #Restart device
+        C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
         }
