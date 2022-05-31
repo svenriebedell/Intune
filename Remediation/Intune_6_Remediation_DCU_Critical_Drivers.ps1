@@ -22,7 +22,7 @@ limitations under the License.
 
 1.0.0   initial version
 1.0.1   solve problem with Var $BIOSPWEncrypted
-1.0.2   Restart 1 hour after update if DCU required boot
+1.0.2   Restart 10 min after update if DCU required boot
 
 #>
 
@@ -59,7 +59,7 @@ if ($CheckAdminPW -eq 0)
     If($BootCheck -eq 1)
         {
         
-        #Restart device
+        #Restart device after 600 sec. / 10 min
         C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
@@ -101,7 +101,7 @@ Else
     If($BootCheck -eq 1)
         {
         
-        #Restart device
+        #Restart device after 600 sec. / 10 min
         C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
