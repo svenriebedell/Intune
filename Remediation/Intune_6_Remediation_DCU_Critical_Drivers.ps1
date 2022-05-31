@@ -63,13 +63,18 @@ if ($CheckAdminPW -eq 0)
         C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
+        Start-Sleep -Seconds 30
+
+        Exit 0
+
         }
 
     Else
         {
 
         Write-Output "Update need no reboot"
-        
+
+        Exit 0
 
         }
        
@@ -100,6 +105,10 @@ Else
         C:\Windows\SysWOW64\shutdown.exe /r /t 600 
         Write-Output "Update need a reboot"
         
+        Start-Sleep -Seconds 30
+
+        Exit 0
+
         }
 
     Else
@@ -107,6 +116,8 @@ Else
 
         Write-Output "Update need no reboot"
         
+        Exit 0
+
         }
 
     }
