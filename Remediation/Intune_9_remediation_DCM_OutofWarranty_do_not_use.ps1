@@ -63,6 +63,11 @@ If ($Duration -le 45)
         New-ItemProperty -Path "HKLM:\SOFTWARE\Dell\Warranty" -Name "Info" -Value "OutofWarranty" -type string -Force
         Write-Output "Device has no support and user is informed"
 
+        #run code in User mode
+        <#$Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials
+        $Username = $Credentials.UserName
+        $Password = $Credentials.Password#>
+        Invoke-Command -ScriptBlock{
         #generate User Notification
         Add-Type -AssemblyName System.Windows.Forms 
         $global:balloon = New-Object System.Windows.Forms.NotifyIcon
@@ -73,7 +78,7 @@ If ($Duration -le 45)
         $balloon.BalloonTipTitle = "Out of Warranty" 
         $balloon.Visible = $true 
         $balloon.ShowBalloonTip(15000)
-
+        }
         exit 0
 
         }
@@ -86,6 +91,7 @@ If ($Duration -le 45)
         #select only support days for notification
         $SupportDays = $Duration.Days
         
+        Invoke-Command -ScriptBlock{
         #generate User Notification
         Add-Type -AssemblyName System.Windows.Forms 
         $global:balloon = New-Object System.Windows.Forms.NotifyIcon
@@ -96,7 +102,7 @@ If ($Duration -le 45)
         $balloon.BalloonTipTitle = "Out of Warranty" 
         $balloon.Visible = $true 
         $balloon.ShowBalloonTip(15000)
-                
+        }
         exit 0
       
         }
