@@ -46,11 +46,11 @@ Paper                 19
 
 #running inventory by Dell Display Manager
 $env:Path ='C:\Program Files (x86)\Dell\Dell Display Manager'
-cd $env:Path
+Set-Location $env:Path
 Start-Process -FilePath "ddm.exe" -ArgumentList "/inventory DCIM" -Wait
 
 #Check if Dell Displays are attached to the device
-$CheckDisplay = get-childitem -recurse HKCU:\Software\EnTech\DCIM | get-itemproperty | where { $_  -match 'Dell*' } | Get-ItemPropertyValue -Name ColorModePreset
+$CheckDisplay = get-childitem -recurse HKCU:\Software\EnTech\DCIM | get-itemproperty | Where-Object { $_  -match 'Dell*' } | Get-ItemPropertyValue -Name ColorModePreset
     
 If ($CheckDisplay -ge 0)
     {

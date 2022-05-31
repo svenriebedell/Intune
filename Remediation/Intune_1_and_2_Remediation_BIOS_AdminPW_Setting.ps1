@@ -1,4 +1,4 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0.2
@@ -44,11 +44,11 @@ $PWTime = "180" # Days a password need exist before it will be change
 
 
 #Variable not for change
-$PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
+$PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
 $DateTransfer = (Get-Date).AddDays($PWTime)
 $PWstatus = ""
-$DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
-$serviceTag = Get-CimInstance -ClassName win32_bios | select -ExpandProperty SerialNumber
+#$DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
+$serviceTag = Get-CimInstance -ClassName win32_bios | Select-Object -ExpandProperty SerialNumber
 $AdminPw = "$serviceTag$PWKey"
 $Date = Get-Date
 $PWKeyOld = ""
@@ -73,8 +73,8 @@ $SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Clas
 
 if ($RegKeyexist -eq "True")
     {
-    $PWKeyOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | select -ExpandProperty BIOS
-    $serviceTagOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | select -ExpandProperty ServiceTag
+    $PWKeyOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | Select-Object -ExpandProperty BIOS
+    $serviceTagOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | Select-Object -ExpandProperty ServiceTag
     $AdminPwOld = "$serviceTagOld$PWKeyOld"
     
     Write-Output "RegKey exist"  | out-file "$PATH\BIOS_Profile.txt" -Append
@@ -103,7 +103,7 @@ Else
 If ($PWset -eq $false)
     {
     
-    $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$AdminPw) | select -ExpandProperty Status
+    $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$AdminPw) | Select-Object -ExpandProperty Status
 
 #Setting of AdminPW was successful
 
@@ -156,7 +156,7 @@ else
     else
         {
         
-        $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$AdminPwOld,$AdminPw) | select -ExpandProperty Status
+        $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$AdminPwOld,$AdminPw) | Select-Object -ExpandProperty Status
 
         #Checking if change was successful
 

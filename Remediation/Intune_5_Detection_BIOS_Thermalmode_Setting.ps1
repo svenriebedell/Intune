@@ -1,4 +1,4 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0
@@ -31,7 +31,7 @@ limitations under the License.
 try{
    
     # Check BIOS AttributName ThermalSetting is Value Quiet
-    $BIOSThermal = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='ThermalManagement'" |select -ExpandProperty CurrentValue
+    $BIOSThermal = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute -Filter "AttributeName='ThermalManagement'" |Select-Object -ExpandProperty CurrentValue
 
     if ($BIOSThermal -match "Quiet")
         {

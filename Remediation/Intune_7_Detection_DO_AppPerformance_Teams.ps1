@@ -1,4 +1,4 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0
@@ -32,7 +32,7 @@ try{
    
     $env:Path='C:\Program Files\Dell\DellOptimizer'
 
-    cd $env:Path
+    Set-Location $env:Path
 
     $DOLearningApps = @(.\do-cli.exe /AppPerformance -listLearningApps | Select-String "ProcessName:") -split(": ")
    

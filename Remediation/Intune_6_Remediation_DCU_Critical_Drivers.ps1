@@ -1,7 +1,7 @@
-﻿<#
+<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.0
+_version_ = 1.0.2
 _Dev_Status_ = Test
 Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
@@ -22,7 +22,7 @@ limitations under the License.
 
 1.0.0   initial version
 1.0.1   solve problem with Var $BIOSPWEncrypted
-
+1.0.2   Restart 1 hour after update if DCU required boot
 
 #>
 
@@ -39,35 +39,85 @@ limitations under the License.
 $PresharedKey = "Dell2022#0123"
 
 # Control check by WMI
-$CheckAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | select -ExpandProperty IsPasswordSet
+$CheckAdminPW = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
 
-#Connect to the BIOSAttributeInterface WMI class
-$BAI = Get-WmiObject -Namespace root/dcim/sysman/biosattributes -Class BIOSAttributeInterface
+<# Check to delete -Connect to the BIOSAttributeInterface WMI class
+$BAI = Get-WmiObject -Namespace root/dcim/sysman/biosattributes -Class BIOSAttributeInterface#>
 
 # Change Path
-cd 'C:\Program Files\Dell\CommandUpdate' #if you using DCU 32/64 Bit version you need to change the directory to C:\Program Files (x86)\Dell\CommandUpdate
-
+$env:Path = 'C:\Program Files\Dell\CommandUpdate'
+#if you using DCU 32/64 Bit version you need to change the directory to C:\Program Files (x86)\Dell\CommandUpdate
+Set-Location $env:Path
 
 if ($CheckAdminPW -eq 0)
     {
     
-    .\dcu-cli.exe /applyUpdates -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
+    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -updateSeverity='Security,Critical' -autoSuspendBitLocker=enable
+    $bootCheck = ($BootCheckTemp.TrimStart('The program exited with return code: '))[-1]
+    
+    # BIOS Updates need a restart if device shutdown by user the update need run again. Timer for restart 1hour
+    If($BootCheck -eq 1)
+        {
         
+        #Restart device
+        C:\Windows\SysWOW64\shutdown.exe /r /t 600 
+        Write-Output "Update need a reboot"
+        
+        Start-Sleep -Seconds 30
+
+        Exit 0
+
+        }
+
+    Else
+        {
+
+        Write-Output "Update need no reboot"
+
+        Exit 0
+
+        }
+       
     }
 
 Else
     {
     
     # Select AdminPW for this device
-    $PWKey = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | select -ExpandProperty BIOS
-    $serviceTag = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | select -ExpandProperty ServiceTag
+    $PWKey = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | Select-Object -ExpandProperty BIOS
+    $serviceTag = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | Select-Object -ExpandProperty ServiceTag
     $AdminPw = "$serviceTag$PWKey"
 
     # generate encrypted BIOS PW
-    $BIOSPWEncrypted_Temp = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
-    $BIOSPWEncrypted = $BIOSPWEncrypted_Temp[1]
+    $BIOSPWEncryptedTemp = .\dcu-cli.exe /generateEncryptedPassword -encryptionKey="$PresharedKey" -password="$AdminPw"
+    $BIOSPWEncrypted = $BIOSPWEncryptedTemp[1]
+
 
     # start update critical drivers
-    .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -silent -updateSeverity='Security,Critical' -reboot=disable -autoSuspendBitLocker=enable
-    
+    $bootCheckTemp = .\dcu-cli.exe /applyUpdates -encryptedPassword="$BIOSPWEncrypted" -encryptionKey="$PresharedKey" -updateSeverity='Security,Critical' -autoSuspendBitLocker=enable
+    $bootCheck = ($BootCheckTemp.TrimStart('The program exited with return code: '))[-1]
+
+    # BIOS Updates need a restart if device shutdown by user the update need run again. Timer for restart 1hour
+    If($BootCheck -eq 1)
+        {
+        
+        #Restart device
+        C:\Windows\SysWOW64\shutdown.exe /r /t 600 
+        Write-Output "Update need a reboot"
+        
+        Start-Sleep -Seconds 30
+
+        Exit 0
+
+        }
+
+    Else
+        {
+
+        Write-Output "Update need no reboot"
+        
+        Exit 0
+
+        }
+
     }
