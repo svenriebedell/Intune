@@ -1,9 +1,9 @@
 ﻿<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.1
+_version_ = 1.1.0
 _Dev_Status_ = Test
-Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+Copyright © 2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 
 No implied support and test in test environment/device before using in any production environment.
 
@@ -18,10 +18,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 #>
 
-<#Version Changes
+<#Change Log
 
 1.0.0   inital version
 1.0.1   integrated function for selection values and rework String Cut by select last Word
+1.1.0   Some kinds of detections shows UNAVAILABLE or WARNING this will be translate to PASS by function set-value. 
+        Switching Single Values to Array
+        Checking if Trusted Device is installed first
 
 
 #>
@@ -36,55 +39,115 @@ limitations under the License.
    
 #>
 
- 
+###########################################
+####        Function section           ####
+###########################################
+
 # Function for snipping SafeBIOS values from the MS Event
-function Get-SafeBIOSValue{
+function Get-SafeBIOSValue
+    {
     
-    # Parameter
-    param(
-        [string]$Value
+        # Parameter
+        param(
+            [string]$Value
+            
+            )
+
+        # Collect last MS Event for Trusted Device | Security Assessment
+        $SelectLastLog = Get-EventLog -LogName Dell -Source "Trusted Device | Security Assessment" -Newest 1 | Select-Object -ExpandProperty message
         
-         )
+        # Prepare value for single line and value
+        
+        $ScoreValue = ($SelectLastLog.Split([Environment]::newline) | Select-String $Value)
+        $ScoreLine = ($ScoreValue.Line).Split(' ')[-1]
 
-    # Collect last MS Event for Trusted Device | Security Assessment
-    $SelectLastLog = Get-EventLog -LogName Dell -Source "Trusted Device | Security Assessment" -Newest 1 | select -ExpandProperty message
+        $ScoreValue = $ScoreLine
+
+        Return $ScoreValue
+     
+    }
+
+# Function for changing Value to FAIL or PASS
+function set-Value 
+    {
+        param
+            (
+                [Parameter(mandatory=$true)][string]$valueSafeBIOS
+            )
+
+        switch ($valueSafeBIOS) 
+            {
+                FAIL {"FAIL"}
+                Default {"PASS"}
+            }
     
-    # Prepare value for single line and value
-     
-    $ScoreValue = ($SelectLastLog.Split([Environment]::newline) | Select-String $Value)
-    $ScoreLine = ($ScoreValue.Line).Split(' ')[-1]
-
-    $ScoreValue = $ScoreLine
-
-    Return $ScoreValue
-     
-}
-
-#Select score values
-$OutputScore = Get-SafeBIOSValue -Value 'Score'
-$OutputAntivirus = Get-SafeBIOSValue -Value 'Antivirus'
-$OutputAdminPW = Get-SafeBIOSValue -Value 'BIOS Admin'
-$OutputBIOSVerify = Get-SafeBIOSValue -Value 'BIOS Verification'
-$OutputMEVerify = Get-SafeBIOSValue -Value 'ME Verification'
-$OutputDiskEncrypt = Get-SafeBIOSValue -Value 'Disk Encryption'
-$OutputFirewall = Get-SafeBIOSValue -Value 'Firewall solution'
-$OutputIOA = Get-SafeBIOSValue -Value 'Indicators of Attack'
-$OutputTPM = Get-SafeBIOSValue -Value 'TPM enabled'
-
-
-
-# Devices without vPro should be pass the later compliance process as well but Intune could be handle only Pass or Fail, all devices without vPro Pass this section
-if ($OutputMEVerify -match 'UNAVAILABLE')
-    {
-    $OutputMEVerify = 'Pass'
-    }
-Else
-    {
-    #No action needed
     }
 
-#prepare variable for Intune
-$hash = @{ SecurityScore = $OutputScore; AntiVirus = $OutputAntivirus; BIOSAdminPW = $OutputAdminPW; BIOSVerfication = $OutputBIOSVerify; DiskEncryption = $OutputDiskEncrypt;Firewall = $OutputFirewall; IndicatorOfAttack = $OutputIOA; TPM = $OutputTPM; vProVerification = $OutputMEVerify} 
+# Function check Dell Trusted Device is installed
+function get-InstallStatus
+    {
 
-#convert variable to JSON format
-return $hash | ConvertTo-Json -Compress
+        $CheckInstall = Get-CimInstance -ClassName Win32_Product | Where-Object Name -Like "Dell Trusted Device Agent" | Select-Object -ExpandProperty Name
+    
+        If ($null -ne $CheckInstall)
+            {
+
+                Return $true
+
+            }
+        else 
+            {
+            
+                Return $false
+            
+            }
+    }
+
+
+###########################################
+####        Program section            ####
+###########################################
+
+If (get-InstallStatus -eq $true)
+    {
+
+        #Select score values
+        $SafeBIOS = @(
+            [PSCustomObject]@{Name = "Score"; Value = Get-SafeBIOSValue -Value 'Score'}
+            [PSCustomObject]@{Name = "Antivirus"; Value = Get-SafeBIOSValue -Value 'Antivirus'}
+            [PSCustomObject]@{Name = "BIOSPWD"; Value = Get-SafeBIOSValue -Value 'BIOS Admin'}
+            [PSCustomObject]@{Name = "BIOSVerification"; Value = Get-SafeBIOSValue -Value 'BIOS Verification'}
+            [PSCustomObject]@{Name = "MEVerification"; Value = Get-SafeBIOSValue -Value 'ME Verification'}
+            [PSCustomObject]@{Name = "DiskEncryption"; Value = Get-SafeBIOSValue -Value 'Disk Encryption'}
+            [PSCustomObject]@{Name = "Firewall"; Value = Get-SafeBIOSValue -Value 'Firewall solution'}
+            [PSCustomObject]@{Name = "IAO"; Value = Get-SafeBIOSValue -Value 'Indicators of Attack'}
+            [PSCustomObject]@{Name = "TPM"; Value = Get-SafeBIOSValue -Value 'TPM enabled'}
+            )
+
+        # Replacing informations like WARINING, UNAVAILABLE, default Value = PASS
+        foreach ($SafeResult in $SafeBIOS)
+            {
+
+                if($SafeResult.Name -ne "Score")
+                    {
+
+                        $SafeResult.Value = set-Value -valueSafeBIOS $SafeResult.Value
+
+                    }
+
+            }
+
+        #prepare variable for Intune
+        $hash = @{ SecurityScore = ($SafeBIOS | Where-Object Name -eq "Score" | Select-Object -ExpandProperty Value) ; AntiVirus = ($SafeBIOS | Where-Object Name -eq "Antivirus" | Select-Object -ExpandProperty Value); BIOSAdminPW = ($SafeBIOS | Where-Object Name -eq "BIOSPWD" | Select-Object -ExpandProperty Value); BIOSVerfication = ($SafeBIOS | Where-Object Name -eq "BIOSVerification" | Select-Object -ExpandProperty Value); DiskEncryption = ($SafeBIOS | Where-Object Name -eq "DiskEncryption" | Select-Object -ExpandProperty Value); Firewall = ($SafeBIOS | Where-Object Name -eq "Firewall" | Select-Object -ExpandProperty Value); IndicatorOfAttack = ($SafeBIOS | Where-Object Name -eq "IAO" | Select-Object -ExpandProperty Value); TPM = ($SafeBIOS | Where-Object Name -eq "TPM" | Select-Object -ExpandProperty Value); vProVerification = ($SafeBIOS | Where-Object Name -eq "MEVerification" | Select-Object -ExpandProperty Value)} 
+
+        #convert variable to JSON format
+        return $hash | ConvertTo-Json -Compress
+
+    }
+else 
+    {
+    
+        Write-Host "No Dell Trusted Device is installed"
+        Exit 1
+
+    }
