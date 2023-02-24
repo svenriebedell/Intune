@@ -147,7 +147,7 @@ If (get-InstallStatus -eq $true)
 else 
     {
     
-        Write-Host "No Dell Trusted Device is installed"
+        Write-Host "No Dell Trusted Device is not installed"
         Exit 1
 
     }
