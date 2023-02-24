@@ -18,9 +18,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 #>
 
-<#Version Changes
-
-1.0.0   inital version
+<#Change Log
+   1.0.0    inital version
+   1.0.1    Add install check for Dell Command | Monitor
 
 
 #>
@@ -35,21 +35,60 @@ limitations under the License.
    
 #>
 
+###########################################
+####        Function section           ####
+###########################################
 
+# Function check Dell Command | Monitor is installed
+function get-InstallStatus
+    {
 
-# prepare Dell Warranty date for compare with actual date
-$WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending | select -ExpandProperty WarrantyEndDate 
-$WarrantyEndSelect = $WarrantyEnd[0] -split ","
-$WarrantyDate = $WarrantyEndSelect -split " "
-[datetime]$FinalDate = $WarrantyDate.GetValue(0)
+        $CheckInstall = Get-CimInstance -ClassName Win32_Product | Where-Object Name -Like "Dell Command | Monitor" | Select-Object -ExpandProperty Name
+    
+        If ($null -ne $CheckInstall)
+            {
 
-# Check availible support days
-$Today = Get-Date
-$Duration = New-TimeSpan -Start $Today -End $FinalDate
-$last30Days = New-TimeSpan -Start $Today -End $FinalDate.AddDays(-30)
+                Return $true
 
-#prepare variable for Intune
-$hash = @{ Support = $Duration.Days; Last30Days = $last30Days.Days }
+            }
+        else 
+            {
+            
+                Return $false
+            
+            }
+    }
 
-#convert variable to JSON format
-return $hash | ConvertTo-Json -Compress
+###########################################
+####        Program section            ####
+###########################################
+
+If (get-InstallStatus -eq $true)
+    {
+
+      # prepare Dell Warranty date for compare with actual date
+      $WarrantyEnd = Get-CimInstance -Namespace root\dcim\sysman -ClassName DCIM_AssetWarrantyInformation | Sort-Object -Descending WarrantyDuration | Select-Object -ExpandProperty WarrantyEndDate 
+      $WarrantyEndSelect = $WarrantyEnd[0] -split ","
+      $WarrantyDate = $WarrantyEndSelect -split " "
+      [datetime]$FinalDate = $WarrantyDate.GetValue(0)
+
+      # Check availible support days
+      $Today = Get-Date
+      $Duration = New-TimeSpan -Start $Today -End $FinalDate
+      $last30Days = New-TimeSpan -Start $Today -End $FinalDate.AddDays(-30)
+
+      #prepare variable for Intune
+      $hash = @{ Support = $Duration.Days; Last30Days = $last30Days.Days }
+
+      #convert variable to JSON format
+      return $hash | ConvertTo-Json -Compress
+   
+    }
+else 
+    {
+    
+        Write-Host "No Dell Command | Monitor is not installed"
+        Exit 1
+
+    }
+
