@@ -13,6 +13,20 @@
                  "Description": "Missing Hardware Updates"
               }
            ]
-        }
+        },
+        { 
+         "SettingName":"LastScan",
+         "Operator":"isEquals",
+         "DataType":"Boolean",
+         "Operand": true,
+         "MoreInfoUrl":"https://www.dell.com/support/manuals/en-us/command-update/dellcommandupdate_ug/install-updates?guid=guid-2ecd73e2-0593-43f1-8e99-07be35e86bf8&lang=en-us",
+         "RemediationStrings":[ 
+               { 
+                  "Language":"en_US",
+                  "Title":"The last Dell Command Update Scan is old",
+                  "Description": "Please click on start and search for Dell Command | Update. Your last Update scan is older than 7 days, missing drivers could be a security risk for our company"
+               }
+            ]
+         }
      ]
 }
