@@ -1,9 +1,9 @@
 ﻿<#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.0
+_version_ = 1.1.0
 _Dev_Status_ = Test
-Copyright © 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+Copyright © 2024 Dell Inc. or its subsidiaries. All Rights Reserved.
 
 No implied support and test in test environment/device before using in any production environment.
 
@@ -21,6 +21,7 @@ limitations under the License.
 <#Version Changes
 
 1.0.0   inital version
+1.1.0   Add check timestamp of last DCU run (you can determine the maximum time since the last scan)
 
 
 #>
@@ -37,15 +38,39 @@ limitations under the License.
 #>
 
 # Path where is DCU is installed need to be changed if you using the 32/64 Bit DCU
-$env:Path = 'C:\Program Files\Dell\CommandUpdate'
+$env:Path = (Get-CimInstance -ClassName Win32_Product -Filter "Name like '%Dell%Command%Update%'").InstallLocation
 
 # Checking missing Updates and return number of missing driver with serverity Critical or Security
-cd $env:Path
+Set-Location $env:Path
 $UpdateCheck = .\dcu-cli.exe /scan -updateSeverity='Security,Critical' | Select-String "Number of applicable updates for the current system configuration: "
 $UpdateCount = $UpdateCheck.Line.TrimStart('Number of applicable updates for the current system configuration: ')
 
+# Checking if last scan older than 7 days
+$maxAge= 7 # last dcu scan not older x days
+[datetime]$regValue = (Get-ItemProperty -Path HKLM:\Software\dell\UpdateService\service -Name LastCheckTimestamp).LastCheckTimestamp
+[datetime]$regDate = $regValue.AddDays($maxAge)
+
+
+$currentDate = Get-Date
+
+if ($regDate -ge $currentDate)
+    {
+
+        Write-Host "DCU scan is not older than 7 days"
+        $DCUCompliance = $true
+
+    }
+else 
+    {
+        
+        Write-Host "DCU scan is out of policy and dcu need run on this machine again"
+        $DCUCompliance = $false
+
+    }
+
+
 #prepare variable for Intune
-$hash = @{ MissingUpdates = $UpdateCount }
+$hash = @{ MissingUpdates = $UpdateCount; LastScan = $DCUCompliance }
 
 #convert variable to JSON format
 return $hash | ConvertTo-Json -Compress
