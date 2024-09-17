@@ -26,11 +26,11 @@ limitations under the License.
 
 <#
 .Synopsis
-   This PowerShell is checking BIOS setting are compliant to IT requirements
+   This PowerShell is changing BIOS setting to required value
    IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
    IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
-   Powershell using WMI and read the existing BIOS settings and compare with IT required
+   Powershell using WMI to change BIOS setting to IT required values
    
 #>
 
