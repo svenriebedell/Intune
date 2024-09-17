@@ -591,11 +591,13 @@ catch
 
 # check setting compliants
 
-foreach ($Status in $BIOSCompliantStatus)
-    {
-        $Status | Where-Object {$Status.AttributeName -eq (foreach {$BIOSCompliant.BIOSSettingName})}
+$compareResult = Compare-Object -ReferenceObject $BIOSCompliantStatus -DifferenceObject $BIOSCompliant -Property BIOSSettingName, BIOSSettingValue, WMIClass
 
-    }
+if ($compareResult.Count -eq 0) {
+    Write-Host "Die Arrays haben die gleichen Werte für die Eigenschaften BIOSSettingName, BIOSSettingValue und WMIClass."
+} else {
+    Write-Host "Die Arrays haben unterschiedliche Werte für die Eigenschaften BIOSSettingName, BIOSSettingValue oder WMIClass."
+}
 
 
 
