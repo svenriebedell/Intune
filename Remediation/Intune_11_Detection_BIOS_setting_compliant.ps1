@@ -548,9 +548,9 @@ function set-BIOSSetting
 #########################################################################################################
 
 $BIOSCompliant = @(
-                    [PSCustomObject]@{BIOSSettingName = AutoOSRecoveryThreshold; BIOSSettingValue = "OFF"}
-                    [PSCustomObject]@{BIOSSettingName = SupportAssistOSRecovery; BIOSSettingValue = "Disabled"}
-                    [PSCustomObject]@{BIOSSettingName = BIOSConnect; BIOSSettingValue = "Enabled"}    
+                    [PSCustomObject]@{BIOSSettingName = "AutoOSRecoveryThreshold"; BIOSSettingValue = "OFF"; WMIClass = "EnumerationAttribute"}
+                    [PSCustomObject]@{BIOSSettingName = "SupportAssistOSRecovery"; BIOSSettingValue = "Disabled"; WMIClass = "EnumerationAttribute"}
+                    [PSCustomObject]@{BIOSSettingName = "BIOSConnect"; BIOSSettingValue = "Enabled"; WMIClass = "EnumerationAttribute"}    
                     )
 
 
@@ -558,22 +558,50 @@ $BIOSCompliant = @(
 ####                                    Program Section                                              ####
 #########################################################################################################
 
-# compliant check - get BIOS setting from device
+# get BIOS setting from device
 
 try 
     {
+        [array]$BIOSCompliantStatus = @()
+        
         foreach ($Setting in $BIOSCompliant)
             {
-                Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName EnumerationAttribute
+                # Temp Array
+                $TempBIOSStatus = New-Object -TypeName psobject
+                
+                $TempBIOSStatus = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName $Setting.WMIClass -ErrorAction Stop| Where-Object {$_.AttributeName -eq $Setting.BIOSSettingName} -ErrorAction Stop| Select-Object AttributeName, CurrentValue
+            
+                [array]$BIOSCompliantStatus += $TempBIOSStatus
             }
-        
-        
-        $CheckIntrusionStatus =  Get-Item -Path DellSmbios:\security\ChassisIntrusionStatus -ErrorAction Stop | Select-Object -ExpandProperty CurrentValue
     }
 catch 
     {
-        <#Do this if a terminating exception happens#>
+        $errMsg = $_.Exception.Message
+        Write-Host "Get BIOS settings failed"
+
+        # write the result to Microsoft Eventlog
+        $ScriptMessage = @{ 
+                            NameScript = "IntuneDetectionBIOSSettings";
+                            ScriptExecution = $errMsg
+                          }
+        $ScriptMessageJSON = $ScriptMessage | ConvertTo-Json
+        write-DellRemediationEvent -Logname Dell -Source RemediationScript -EventId '3-WarningScript' -Message $ScriptMessageJSON
+        Exit 1
     }
+
+# check setting compliants
+
+foreach ($Status in $BIOSCompliantStatus)
+    {
+        $Status | Where-Object {$Status.AttributeName -eq (foreach {$BIOSCompliant.BIOSSettingName})}
+
+    }
+
+
+
+
+
+
 
 try 
     {
@@ -625,12 +653,7 @@ try
                 Exit 0
             }
     }
-catch 
-    {
-        $errMsg = $_.Exception.Message
-        write-host $errMsg
-        Exit 1
-    }
+
 #########################################################################################################
 ####                                    END                                                          ####
 #########################################################################################################
