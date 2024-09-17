@@ -590,71 +590,73 @@ catch
     }
 
 # check setting compliants
+[array]$SettingCompliant = @()
 
-$compareResult = Compare-Object -ReferenceObject $BIOSCompliantStatus -DifferenceObject $BIOSCompliant -Property BIOSSettingName, BIOSSettingValue, WMIClass
-
-if ($compareResult.Count -eq 0) {
-    Write-Host "Die Arrays haben die gleichen Werte für die Eigenschaften BIOSSettingName, BIOSSettingValue und WMIClass."
-} else {
-    Write-Host "Die Arrays haben unterschiedliche Werte für die Eigenschaften BIOSSettingName, BIOSSettingValue oder WMIClass."
-}
-
-
-
-
-
-
-
-try 
+foreach ($Status in $BIOSCompliantStatus)
     {
-        # get Chassis BIOS setting by WMI
-        try 
+        
+        $TempSettingCompliant = New-Object -TypeName psobject
+
+        ForEach ($Compliant in $BIOSCompliant)
             {
-                $CheckIntrusionStatus =  Get-Item -Path DellSmbios:\security\ChassisIntrusionStatus -ErrorAction Stop | Select-Object -ExpandProperty CurrentValue
+                If ($Compliant.BIOSSettingName -eq $Status.AttributeName)
+                    {
+                        
+
+                        If($Compliant.BIOSSettingValue -eq $Status.CurrentValue)
+                            {
+                                $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name AttributeName -Value $Status.AttributeName
+                                $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name Compliant -Value $true
+
+                            }
+                        else 
+                            {
+                                $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name AttributeName -Value $Status.AttributeName
+                                $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name Compliant -Value $false
+                            }
+                    }    	
             }
-        catch 
+            $SettingCompliant += $TempSettingCompliant
+    }
+
+
+# if one or more settings not compliant Exit 1 other otherwise Exit 0
+foreach ($Compliant in $SettingCompliant)
+    {
+        if ($Compliant.Compliant -eq $true)
             {
-                Write-Host "Dell Command PowerShell failure" -ForegroundColor Red
+                Write-Host $Compliant.AttributeName "is compliant" $true
+            }
+        else 
+            {   
+                Write-Host "One or more settings are not compliant"
                 
                 # write the result to Microsoft Eventlog
-                $ScriptMessage = @{ 
-                                    NameScript = "DetectionChassisIntrusionReset";
-                                    PowerShellprovider = "Error"
-                                  }
-                $ScriptMessageJSON = $ScriptMessage | ConvertTo-Json
-                write-DellRemediationEvent -Logname Dell -Source RemediationScript -EventId '1-ErrorScript' -Message $ScriptMessageJSON
-            }
-       
-
-        If ($CheckIntrusionStatus -eq "Tripped" -or $CheckIntrusionStatus -eq "Door open")
-            {
-                Write-Host "Message: Chassis intrusion detected"
-
-                # write the result to Microsoft Eventlog
-                $ScriptMessage = @{ 
-                                    NameScript = "DetectionChassisIntrusionReset";
-                                    ChassisIntrusionStatus = $CheckIntrusionStatus
-                                    Alert = $true
+                                $ScriptMessage = @{ 
+                                    NameScript = "DetectionBIOSSettings";
+                                    DeviceSettings = $BIOSCompliantStatus
+                                    SettingCompliant = $SettingCompliant
+                                    Compliant = $false
                                   }
                 $ScriptMessageJSON = $ScriptMessage | ConvertTo-Json
                 write-DellRemediationEvent -Logname Dell -Source RemediationScript -EventId '3-WarningScript' -Message $ScriptMessageJSON
                 Exit 1
             }
-        else 
-            {
-                Write-Host "Message: Chassis intrusion not detected"
 
-                # write the result to Microsoft Eventlog
-                $ScriptMessage = @{ 
-                                    NameScript = "DetectionChassisIntrusionReset";
-                                    ChassisIntrusionStatus = $CheckIntrusionStatus
-                                    Alert = $false
-                                  }
-                $ScriptMessageJSON = $ScriptMessage | ConvertTo-Json
-                write-DellRemediationEvent -Logname Dell -Source RemediationScript -EventId '2-InformationScript' -Message $ScriptMessageJSON
-                Exit 0
-            }
     }
+
+Write-Host "BIOS settings are compliant"
+                
+# write the result to Microsoft Eventlog
+$ScriptMessage = @{ 
+                        NameScript = "DetectionBIOSSettings";
+                        DeviceSettings = $BIOSCompliantStatus
+                        SettingCompliant = $SettingCompliant
+                        Compliant = $true
+                      }
+$ScriptMessageJSON = $ScriptMessage | ConvertTo-Json
+write-DellRemediationEvent -Logname Dell -Source RemediationScript -EventId '2-InformationScript' -Message $ScriptMessageJSON
+Exit 0
 
 #########################################################################################################
 ####                                    END                                                          ####
