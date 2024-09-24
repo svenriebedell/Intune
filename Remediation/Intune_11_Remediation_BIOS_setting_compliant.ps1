@@ -548,8 +548,8 @@ function set-BIOSSetting
 #########################################################################################################
 
 $BIOSCompliant = @(
-                    [PSCustomObject]@{BIOSSettingName = "AutoOSRecoveryThreshold"; BIOSSettingValue = "2"; WMIClass = "EnumerationAttribute"}
-                    [PSCustomObject]@{BIOSSettingName = "SupportAssistOSRecovery"; BIOSSettingValue = "Enabled"; WMIClass = "EnumerationAttribute"}
+                    [PSCustomObject]@{BIOSSettingName = "AutoOSRecoveryThreshold"; BIOSSettingValue = "OFF"; WMIClass = "EnumerationAttribute"}
+                    [PSCustomObject]@{BIOSSettingName = "SupportAssistOSRecovery"; BIOSSettingValue = "Disabled"; WMIClass = "EnumerationAttribute"}
                     [PSCustomObject]@{BIOSSettingName = "BIOSConnect"; BIOSSettingValue = "Enabled"; WMIClass = "EnumerationAttribute"}    
                     )
 
