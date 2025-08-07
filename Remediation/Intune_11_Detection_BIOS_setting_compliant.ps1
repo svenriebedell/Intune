@@ -1,9 +1,9 @@
 <#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.0
+_version_ = 1.0.1
 _Dev_Status_ = Test
-Copyright ©2024 Dell Inc. or its subsidiaries. All Rights Reserved.
+Copyright ©2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
 No implied support and test in test environment/device before using in any production environment.
 
@@ -21,6 +21,7 @@ limitations under the License.
 <#Version Changes
 
       1.0.0    inital version
+      1.0.1    update function set-BIOSSetting and write-DellRemediationEvent
 
 #>
 
@@ -31,7 +32,7 @@ limitations under the License.
    IMPORTANT: This script does not reboot the system to apply or query system.
 .DESCRIPTION
    Powershell using WMI and read the existing BIOS settings and compare with IT required
-   
+
 #>
 
 
@@ -40,7 +41,6 @@ limitations under the License.
 #########################################################################################################
 function write-DellRemediationEvent
     {
-        
         <#
         .Synopsis
         This function write Events to Microsoft Eventlog. Need adminrights for execution.
@@ -68,32 +68,83 @@ function write-DellRemediationEvent
         Value is a message that will be visible in Event, it could be a string or JSON or XML but only one message for each event.
 
         Changelog:
-            1.0.0 Initial Version
-            1.0.1 Delete Try and Catch for testing Logname/Ressource exit and change to allway add Logname/Ressource and if exist ignor error silten.
-                  Correct issue all logs are warning
+            1.0.0   Initial Version
+            1.0.1   Delete Try and Catch for testing Logname/Ressource exit and change to allway add Logname/Ressource and if exist ignor error silten.
+                    Correct issue all logs are warning
+            1.0.2   change commannds to make function powershell 7 ready
+            1.1.0   updating issue with logsize and adding new LogName and Source
+            1.1.1   correct issue to size eventlog because sometime it change to existing value
 
         .Example
         # Write a Microsoft Event to Application and Service Logs for LogName Dell and Source RemediationScript with ID 2 for Information with the message body "Test message"
         write-DellRemediationEvent -Logname Dell -Source RemediationScript -EntryType Information -EventID '2-InformationScript' -Message "Test message"
 
         #>
-               
-        param 
+        param
             (
 
-                [Parameter(mandatory=$false)][ValidateSet('Dell')]$Logname='Dell',
-                [Parameter(mandatory=$false)][ValidateSet('RemediationScript')]$Source='RemediationScript',
+                [Parameter(mandatory=$false)][ValidateSet('Dell','DellRemediation')]$Logname,
+                [Parameter(mandatory=$false)][ValidateSet('RemediationScript','RemediationFunction','RemediationInstall','RemediationTranscript')]$Source,
                 [Parameter(mandatory=$false)][ValidateSet('Error', 'Information', 'FailureAudit', 'SuccessAudit', 'Warning')]$EntryType='Information',
                 [Parameter(mandatory=$true)][ValidateSet('0-SuccessScript','1-ErrorScript','2-InformationScript','3-WarningScript','10-SuccessFunction','11-ErrorFunction','12-InformationFunction','13-WarningFunction','20-SuccessInstall','21-ErrorInstall','22-InformationInstall','23-WarningInstall')][String]$EventID,
                 [Parameter(mandatory=$true)]$Message
 
             )
+        #########################################################################################################
+        ####                                    Variable Section                                             ####
+        #########################################################################################################
 
+        # Log Parameters
+        [int64]$LogSize = 15420KB
+
+        #########################################################################################################
+        ####                                Function Program Section                                         ####
+        #########################################################################################################
         # prepare the logname and ressource name
-        New-EventLog -LogName $Logname -Source $Source -ErrorAction SilentlyContinue
-                
+        $checkSource = [System.Diagnostics.EventLog]::SourceExists($source)
+        if ($checkSource -ne $true)
+            {
+                try
+                    {
+                        [System.Diagnostics.EventLog]::CreateEventSource($source, $logName)
+                        Write-Verbose "Event source '$source' created for log '$logName'." -Verbose
+                    }
+                catch
+                    {
+                        Write-Verbose "Event source '$source' fail to create for log '$logName'." -Verbose
+                        return $false
+                    }
+
+            }
+        else
+            {
+                Write-Verbose "Event source '$source' already exists." -Verbose
+            }
+
+
+        # Change the size of the event log if it is not $LogSize
+        $EventLog = Get-WinEvent -ListLog $Logname
+        if ($EventLog.MaximumSizeInBytes -lt $LogSize)
+            {
+                try
+                    {
+                        $EventLog.MaximumSizeInBytes = $LogSize
+                        $EventLog.SaveChanges()
+                        Write-Verbose "Event log '$Logname' size changed to $LogSize." -Verbose
+                    }
+                catch
+                    {
+                        Write-Verbose "Event log '$Logname' failed to change size to $LogSize." -Verbose
+                        return $false
+                    }
+            }
+        else
+            {
+                Write-Verbose "Event log '$Logname' is already $LogSize." -Verbose
+            }
+
         # modify EventID to number only
-        [int]$EventID = switch ($EventID) 
+        [int]$EventID = switch ($EventID)
                     {
                         '0-SuccessScript'             {0}
                         '1-ErrorScript'               {1}
@@ -114,11 +165,11 @@ function write-DellRemediationEvent
 
         if ($EventID -eq 0 -or $EventID -eq 10 -or $EventID -eq 20)
             {
-                $EntryType = 'SuccessAudit'                    
+                $EntryType = 'SuccessAudit'
             }
         if (($EventID -eq 1) -or ($EventID -eq 11) -or ($EventID -eq 21))
             {
-                $EntryType = 'Error'                    
+                $EntryType = 'Error'
             }
         if (($EventID -eq 2) -or ($EventID -eq 12) -or ($EventID -eq 22))
             {
@@ -129,15 +180,27 @@ function write-DellRemediationEvent
                 $EntryType = 'Warning'
             }
 
+        try
+            {
+                # Initialize Eventlog for reporting and Debugging
+                $evt=new-object System.Diagnostics.EventLog($logName)
+                $evt.Source=$source
 
-        # write log information
-        Write-EventLog -LogName $Logname -Source $Source -EntryType $EntryType -EventID $EventID -Message $Message
-
+                #write event by .net
+                $evt.WriteEntry($Message,$EntryType,$EventID)
+                Write-Verbose "Eventlog is created successful" -Verbose
+                Return $true
+            }
+        catch
+            {
+                Write-Verbose "Eventlog could not created" -Verbose
+                Return $false
+            }
     }
 
 function set-BIOSSetting
     {
-        
+
         <#
         .Synopsis
         This function changing the Dell Client BIOS Settings by CIM
@@ -158,36 +221,37 @@ function set-BIOSSetting
         Changelog:
             1.0.0 Initial Version
             1.0.1 add return for setting returncode to the mainscript
+            1.0.2 switch from write-host to Write-Information, write-verbose and write-error
 
 
         .Example
         This example will set the Chassis Intrusion detection to SilentEnable, if the Device has no BIOS Admin Password.
-        
+
         set-BIOSSetting -SettingName ChasIntrusion -SettingValue SilentEnable
 
         .Example
         This example will set the Chassis Intrusion detection to SilentEnable, if the Device has BIOS Admin Password.
-        
+
         set-BIOSSetting -SettingName ChasIntrusion -SettingValue SilentEnable -BIOSPW <Your BIOS Admin PWD>
 
         .Example
         This example will set a new BIOS Admin Password for the first time
-        
+
         set-BIOSSetting -SettingName Admin -SettingValue <Your BIOS Admin PWD>
 
         .Example
         This example will change BIOS Admin Password
-        
+
         set-BIOSSetting -SettingName Admin -SettingValue <Your NEW BIOS Admin PWD> -BIOSPW <Your OLD BIOS Admin PWD>
 
         .Example
         This example will Clear BIOS Admin Password
-        
+
         set-BIOSSetting -SettingName Admin -SettingValue ClearPWD -BIOSPW <Your OLD BIOS Admin PWD>
 
         #>
-               
-        param 
+
+        param
             (
 
                 [Parameter(mandatory=$true)] [String]$SettingName,
@@ -202,18 +266,18 @@ function set-BIOSSetting
         #########################################################################################################
 
         # connect BIOS Interface
-        try 
+        try
             {
                 # get BIOS WMI Interface
                 $BIOSInterface = Get-CimInstance -Namespace root\dcim\sysman\biosattributes -Class BIOSAttributeInterface -ErrorAction Stop
                 $SecurityInterface = Get-CimInstance -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface -ErrorAction Stop
-                Write-Host "BIOS Interface connected" -ForegroundColor Green
+                Write-Information "BIOS Interface connected" -InformationAction Continue
             }
-        catch 
+        catch
             {
-                Write-Host "Error : BIOS interface access denied or unreachable" -ForegroundColor Red
-                Write-Host "Status : false"
-                Exit 1
+                Write-Error "Error : BIOS interface access denied or unreachable"
+                Write-Information "Status : false" -InformationAction Continue
+                Return $false
             }
 
 
@@ -225,18 +289,18 @@ function set-BIOSSetting
 
                 if ($BIOSAdminPW -match "1")
                     {
-                        Write-Host "BIOS Admin PW is set on this Device"
-                        
+                        Write-Information "BIOS Admin PW is set on this Device" -InformationAction Continue
+
                         If ($null -eq $BIOSPW)
                             {
-                                Write-Host "Message : required parameter BIOSPW is empty"
+                                Write-Information "Message : required parameter BIOSPW is empty" -InformationAction Continue
                                 Return $false, "3"
-                                Exit 1
+                                Return $false
                             }
-                        
+
                         #Get encoder for encoding password
                         $encoder = New-Object System.Text.UTF8Encoding
-                                        
+
                         #encode the password
                         $AdminBytes = $encoder.GetBytes($BIOSPW)
 
@@ -245,28 +309,28 @@ function set-BIOSSetting
                                 ######################################
                                 ####  BIOS Setting with Admin PWD ####
                                 ######################################
-                                        
-                                try 
+
+                                try
                                     {
                                         # Argument
                                         $argumentsWithPWD = @{
-                                                                AttributeName=$SettingName; 
-                                                                AttributeValue=$SettingValue; 
-                                                                SecType=1; 
-                                                                SecHndCount=$AdminBytes.Length; 
+                                                                AttributeName=$SettingName;
+                                                                AttributeValue=$SettingValue;
+                                                                SecType=1;
+                                                                SecHndCount=$AdminBytes.Length;
                                                                 SecHandle=$AdminBytes;
                                                             }
-                                                
+
                                         # Set a BIOS Attribute
-                                        Write-Host "Set Bios"
+                                        Write-Information "Set Bios" -InformationAction Continue
                                         $SetResult = Invoke-CimMethod -InputObject $BIOSInterface -MethodName SetAttribute -Arguments $argumentsWithPWD -ErrorAction Stop
-                                                
+
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS setting success"
+                                                Write-Information "Message : BIOS setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                 switch ( $SetResult.Status )
                                                     {
@@ -279,20 +343,20 @@ function set-BIOSSetting
                                                         6 { $result = 'Protocol Error' }
                                                         default { $result ='Unknown' }
                                                     }
-                                                Write-Host "Message : BIOS setting $result"
+                                                Write-Information "Message : BIOS setting $result" -InformationAction Continue
                                                 return $false, $SetResult.Status
                                             }
                                     }
-                                catch 
+                                catch
                                     {
                                         $errMsg = $_.Exception.Message
-                                        write-host $errMsg
+                                        Write-Information $errMsg -InformationAction Continue
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS setting success"
+                                                Write-Information "Message : BIOS setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                         switch ( $SetResult.Status )
                                                             {
@@ -305,22 +369,22 @@ function set-BIOSSetting
                                                                 6 { $result = 'Protocol Error' }
                                                                 default { $result ='Unknown' }
                                                             }
-                                                        Write-Host "Message : BIOS Password setting $result"
+                                                        Write-Information "Message : BIOS Password setting $result" -InformationAction Continue
                                                         return $false, $SetResult.Status
-                                                        exit 1
+                                                        Return $false
                                             }
                                     }
                             }
-                        else 
+                        else
                             {
                                 ################################################
                                 ####  BIOS Change/Delete Admin or Sytem PWD ####
                                 ################################################
-                                try 
+                                try
                                     {
                                         If($SettingValue -eq "ClearPWD")
                                             {
-                                                Write-Host "Admin PWD clear"
+                                                Write-Information "Admin PWD clear" -InformationAction Continue
                                                 # Argument
                                                 $argumentsWithPWD = @{
                                                                         NameId=$SettingName;
@@ -331,9 +395,9 @@ function set-BIOSSetting
                                                                         SecHandle=$AdminBytes;
                                                                     }
                                             }
-                                        else 
+                                        else
                                             {
-                                                Write-Host "Admin PWD change"
+                                                Write-Information "Admin PWD change" -InformationAction Continue
                                                 # Argument
                                                 $argumentsWithPWD = @{
                                                                         NameId=$SettingName;
@@ -344,17 +408,17 @@ function set-BIOSSetting
                                                                         SecHandle=$AdminBytes;
                                                                     }
                                             }
- 
-                    
+
+
                                         # Set a BIOS Attribute
                                         $SetResult = Invoke-CimMethod -InputObject $SecurityInterface -MethodName SetnewPassword -Arguments $argumentsWithPWD #-ErrorAction Stop
-                                        
+
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS Password setting success"
+                                                Write-Information "Message : BIOS Password setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                 switch ( $SetResult.Status )
                                                     {
@@ -367,20 +431,20 @@ function set-BIOSSetting
                                                         6 { $result = 'Protocol Error' }
                                                         default { $result ='Unknown' }
                                                     }
-                                                Write-Host "Message : BIOS Password setting $result"
+                                                Write-Information "Message : BIOS Password setting $result" -InformationAction Continue
                                                 return $false, $SetResult.Status
                                             }
                                     }
-                                catch 
+                                catch
                                     {
                                         $errMsg = $_.Exception.Message
-                                        write-host $errMsg
+                                        Write-Information $errMsg -InformationAction Continue
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS Password setting success"
+                                                Write-Information "Message : BIOS Password setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                 switch ( $SetResult.Status )
                                                     {
@@ -393,43 +457,43 @@ function set-BIOSSetting
                                                         6 { $result = 'Protocol Error' }
                                                         default { $result ='Unknown' }
                                                     }
-                                                Write-Host "Message : BIOS Password setting $result"
+                                                Write-Information "Message : BIOS Password setting $result" -InformationAction Continue
                                                 return $false, $SetResult.Status
-                                                exit 1
+                                                Return $false
                                             }
-                                    }                                      
+                                    }
                             }
                     }
                 Else
                     {
-                        Write-Host "No BIOS Admin PW is set on this Device"
+                        Write-Information "No BIOS Admin PW is set on this Device" -InformationAction Continue
 
                         If (($SettingName -ne "Admin") -and ($SettingName -ne "System"))
                             {
                                 #########################################
                                 ####  BIOS Setting without Admin PWD ####
                                 #########################################
-                                try 
+                                try
                                     {
                                         # Argument
-                                        $argumentsNoPWD = @{ 
-                                                                AttributeName=$SettingName; 
+                                        $argumentsNoPWD = @{
+                                                                AttributeName=$SettingName;
                                                                 AttributeValue=$SettingValue;
                                                                 SecType=0;
                                                                 SecHndCount=0;
                                                                 SecHandle=@()
-                                                            }  
-                                        
-                                        Write-Host "Set Bios Settings"
+                                                            }
+
+                                        Write-Information "Set Bios Settings" -InformationAction Continue
                                         # Set a BIOS Attribute ChasIntrusion to EnabledSilent (BIOS password is not set)
                                         $SetResult = Invoke-CimMethod -InputObject $BIOSInterface -MethodName SetAttribute -Arguments $argumentsNoPWD -ErrorAction Stop
-        
+
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS setting success"
+                                                Write-Information "Message : BIOS setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                 switch ( $SetResult.Status )
                                                     {
@@ -442,29 +506,29 @@ function set-BIOSSetting
                                                         6 { $result = 'Protocol Error' }
                                                         default { $result ='Unknown' }
                                                     }
-                                                Write-Host "Message : BIOS setting $result"
+                                                Write-Information "Message : BIOS setting $result" -InformationAction Continue
                                                 return $false, $SetResult.Status
                                             }
                                     }
-                                catch 
+                                catch
                                     {
                                         $errMsg = $_.Exception.Message
-                                        write-host $errMsg
-                                        Write-Host "Message : BIOS setting failed"
+                                        Write-Information $errMsg -InformationAction Continue
+                                        Write-Information "Message : BIOS setting failed" -InformationAction Continue
                                         return $false, $SetResult.Status
-                                        exit 1
+                                        Return $false
                                     }
 
 
                             }
-                        else 
+                        else
                             {
                                 ######################################
                                 ####  BIOS Set Admin or Sytem PWD ####
                                 ######################################
-                                try 
+                                try
                                     {
-                                        
+
                                         # Argument
                                         $argumentsNoPWD = @{
                                                                 NameId=$SettingName;
@@ -474,18 +538,18 @@ function set-BIOSSetting
                                                                 SecHndCount=0;
                                                                 SecHandle=@();
                                                             }
-                                        
-                                        Write-Host "Set Password"
-                                        
+
+                                        Write-Information "Set Password" -InformationAction Continue
+
                                         # Set a BIOS Passwords
                                         $SetResult = Invoke-CimMethod -InputObject $SecurityInterface -MethodName SetnewPassword -Arguments $argumentsNoPWD -ErrorAction Stop
-        
+
                                         If ($SetResult.Status -eq 0)
                                             {
-                                                Write-Host "Message : BIOS Password setting success"
+                                                Write-Information "Message : BIOS Password setting success" -InformationAction Continue
                                                 return $true
                                             }
-                                        else 
+                                        else
                                             {
                                                 switch ( $SetResult.Status )
                                                     {
@@ -498,17 +562,17 @@ function set-BIOSSetting
                                                         6 { $result = 'Protocol Error' }
                                                         default { $result ='Unknown' }
                                                     }
-                                                Write-Host "Message : BIOS setting $result"
+                                                Write-Information "Message : BIOS setting $result" -InformationAction Continue
                                                 return $false, $SetResult.Status
                                             }
                                     }
-                                catch 
+                                catch
                                     {
                                         $errMsg = $_.Exception.Message
-                                        write-host $errMsg
-                                        Write-Host "Message : BIOS setting failed"
+                                        Write-Information $errMsg -InformationAction Continue
+                                        Write-Information "Message : BIOS setting failed" -InformationAction Continue
                                         return $false, $SetResult.Status
-                                        exit 1
+                                        Return $false
                                     }
                             }
                     }
@@ -516,13 +580,13 @@ function set-BIOSSetting
         catch
             {
                 $errMsg = $_.Exception.Message
-                write-host $errMsg
+                Write-Information $errMsg -InformationAction Continue
                 If ($SetResult.Status -eq 0)
                     {
-                        Write-Host "Message : BIOS setting success"
+                        Write-Information "Message : BIOS setting success" -InformationAction Continue
                         return $true
                     }
-                else 
+                else
                     {
                         switch ( $SetResult.Status )
                             {
@@ -535,11 +599,11 @@ function set-BIOSSetting
                                 6 { $result = 'Protocol Error' }
                                 default { $result ='Unknown' }
                             }
-                        Write-Host "Message : BIOS Password setting $result"
+                        Write-Information "Message : BIOS Password setting $result" -InformationAction Continue
                         return $false, $SetResult.Status
                     }
-                write-host "Status : False"
-                exit 1
+                Write-Information "Status : False" -InformationAction Continue
+                Return $false
             }
     }
 
@@ -550,7 +614,7 @@ function set-BIOSSetting
 $BIOSCompliant = @(
                     [PSCustomObject]@{BIOSSettingName = "AutoOSRecoveryThreshold"; BIOSSettingValue = "OFF"; WMIClass = "EnumerationAttribute"}
                     [PSCustomObject]@{BIOSSettingName = "SupportAssistOSRecovery"; BIOSSettingValue = "Disabled"; WMIClass = "EnumerationAttribute"}
-                    [PSCustomObject]@{BIOSSettingName = "BIOSConnect"; BIOSSettingValue = "Enabled"; WMIClass = "EnumerationAttribute"}    
+                    [PSCustomObject]@{BIOSSettingName = "BIOSConnect"; BIOSSettingValue = "Enabled"; WMIClass = "EnumerationAttribute"}
                     )
 
 
@@ -560,27 +624,27 @@ $BIOSCompliant = @(
 
 # get BIOS setting from device
 
-try 
+try
     {
         [array]$BIOSCompliantStatus = @()
-        
+
         foreach ($Setting in $BIOSCompliant)
             {
                 # Temp Array
                 $TempBIOSStatus = New-Object -TypeName psobject
-                
+
                 $TempBIOSStatus = Get-CimInstance -Namespace root/dcim/sysman/biosattributes -ClassName $Setting.WMIClass -ErrorAction Stop| Where-Object {$_.AttributeName -eq $Setting.BIOSSettingName} -ErrorAction Stop| Select-Object AttributeName, CurrentValue
-            
+
                 [array]$BIOSCompliantStatus += $TempBIOSStatus
             }
     }
-catch 
+catch
     {
         $errMsg = $_.Exception.Message
         Write-Host "Get BIOS settings failed"
 
         # write the result to Microsoft Eventlog
-        $ScriptMessage = @{ 
+        $ScriptMessage = @{
                             NameScript = "IntuneDetectionBIOSSettings";
                             ScriptExecution = $errMsg
                           }
@@ -594,14 +658,13 @@ catch
 
 foreach ($Status in $BIOSCompliantStatus)
     {
-        
+
         $TempSettingCompliant = New-Object -TypeName psobject
 
         ForEach ($Compliant in $BIOSCompliant)
             {
                 If ($Compliant.BIOSSettingName -eq $Status.AttributeName)
                     {
-                        
 
                         If($Compliant.BIOSSettingValue -eq $Status.CurrentValue)
                             {
@@ -609,12 +672,12 @@ foreach ($Status in $BIOSCompliantStatus)
                                 $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name Compliant -Value $true
 
                             }
-                        else 
+                        else
                             {
                                 $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name AttributeName -Value $Status.AttributeName
                                 $TempSettingCompliant | Add-Member -MemberType NoteProperty -Name Compliant -Value $false
                             }
-                    }    	
+                    }
             }
             $SettingCompliant += $TempSettingCompliant
     }
@@ -627,12 +690,12 @@ foreach ($Compliant in $SettingCompliant)
             {
                 Write-Host $Compliant.AttributeName "is compliant" $true
             }
-        else 
-            {   
+        else
+            {
                 Write-Host "One or more settings are not compliant"
-                
+
                 # write the result to Microsoft Eventlog
-                                $ScriptMessage = @{ 
+                                $ScriptMessage = @{
                                     NameScript = "DetectionBIOSSettings";
                                     DeviceSettings = $BIOSCompliantStatus
                                     SettingCompliant = $SettingCompliant
@@ -646,9 +709,9 @@ foreach ($Compliant in $SettingCompliant)
     }
 
 Write-Host "BIOS settings are compliant"
-                
+
 # write the result to Microsoft Eventlog
-$ScriptMessage = @{ 
+$ScriptMessage = @{
                         NameScript = "DetectionBIOSSettings";
                         DeviceSettings = $BIOSCompliantStatus
                         SettingCompliant = $SettingCompliant
